@@ -119,7 +119,7 @@ function renderFullCard(npc, allSkills) {
   card.className = 'card';
 
   const gb = npc.giftsAndBurdens.length > 0
-    ? npc.giftsAndBurdens.map(g => `${g.name} (${g.magnitude > 0 ? '+' : ''}${g.magnitude})`).join(', ')
+    ? npc.giftsAndBurdens.map(gbLabel).join(', ')
     : 'None';
 
   card.innerHTML = `
@@ -195,8 +195,15 @@ function appendCopyBtn(card, text) {
   card.appendChild(btn);
 }
 
+function gbLabel(g) {
+  const lvl = Math.abs(g.magnitude);
+  const levelWord = lvl === 1 ? 'trivial' : lvl === 2 ? 'serious' : 'critical';
+  const type = g.magnitude > 0 ? 'Gift' : 'Burden';
+  return `${g.name} ${g.magnitude > 0 ? '+' : ''}${g.magnitude} ${type} (${levelWord})`;
+}
+
 function npcToText(npc) {
-  const gb = npc.giftsAndBurdens.map(g => `${g.name} (${g.magnitude > 0 ? '+' : ''}${g.magnitude})`).join(', ') || 'None';
+  const gb = npc.giftsAndBurdens.map(gbLabel).join(', ') || 'None';
   const stats = Object.entries(npc.stats).map(([k,v]) => `  ${k}: ${v}`).join('\n');
   const derived = Object.entries(npc.derived).map(([k,v]) => `  ${k}: ${v}`).join('\n');
   const skills = Object.entries(npc.skills).map(([k,d]) => {
