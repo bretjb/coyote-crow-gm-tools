@@ -8,8 +8,8 @@
     },
     "statBonus": "Strength",
     "statPriorities": ["Strength", "Endurance", "Agility"],
-    "freeSkillOptions": ["Melee Combat", "Athletics"],
-    "preferredSkills": ["Melee Combat", "Athletics", "Intimidation"],
+    "freeSkillOptions": ["Melee Weapons", "Unarmed Combat"],
+    "preferredSkills": ["Melee Weapons", "Unarmed Combat", "Athletics"],
     "demographics": {
       "age": [
         { "value": "Young", "weight": 35 },
@@ -37,8 +37,8 @@
     },
     "statBonus": "Agility",
     "statPriorities": ["Agility", "Perception", "Endurance"],
-    "freeSkillOptions": ["Stealth", "Ranged Combat"],
-    "preferredSkills": ["Stealth", "Ranged Combat", "Tracking", "Athletics"],
+    "freeSkillOptions": ["Stealth", "Ranged Weapons"],
+    "preferredSkills": ["Stealth", "Ranged Weapons", "Tracking", "Athletics"],
     "demographics": {
       "age": [
         { "value": "Young", "weight": 45 },
@@ -66,8 +66,8 @@
     },
     "statBonus": "Intelligence",
     "statPriorities": ["Intelligence", "Perception", "Wisdom"],
-    "freeSkillOptions": ["Lore", "Crafting"],
-    "preferredSkills": ["Lore", "Crafting"],
+    "freeSkillOptions": ["Knowledge", "Crafting"],
+    "preferredSkills": ["Knowledge", "Crafting", "Computers", "Science"],
     "demographics": {
       "age": [
         { "value": "Young", "weight": 25 },
@@ -95,8 +95,8 @@
     },
     "statBonus": "Perception",
     "statPriorities": ["Perception", "Intelligence", "Wisdom"],
-    "freeSkillOptions": ["Tracking", "Lore"],
-    "preferredSkills": ["Tracking", "Lore", "Survival"],
+    "freeSkillOptions": ["Investigation", "Tracking"],
+    "preferredSkills": ["Investigation", "Tracking", "Knowledge", "Survival"],
     "demographics": {
       "age": [
         { "value": "Young", "weight": 20 },
@@ -124,8 +124,8 @@
     },
     "statBonus": "Spirit",
     "statPriorities": ["Spirit", "Wisdom", "Charisma"],
-    "freeSkillOptions": ["Healing", "Spirit Sense"],
-    "preferredSkills": ["Healing", "Spirit Sense", "Lore"],
+    "freeSkillOptions": ["Medicine", "Ceremony"],
+    "preferredSkills": ["Medicine", "Ceremony", "Herbalism", "Knowledge"],
     "demographics": {
       "age": [
         { "value": "Young", "weight": 15 },
@@ -153,8 +153,8 @@
     },
     "statBonus": "Charisma",
     "statPriorities": ["Charisma", "Spirit", "Will"],
-    "freeSkillOptions": ["Persuasion", "Intimidation"],
-    "preferredSkills": ["Persuasion", "Intimidation"],
+    "freeSkillOptions": ["Charm", "Performance"],
+    "preferredSkills": ["Charm", "Performance", "Coercion", "Deception"],
     "demographics": {
       "age": [
         { "value": "Young", "weight": 10 },

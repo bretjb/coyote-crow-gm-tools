@@ -112,6 +112,35 @@ input, select {
   color: var(--success);
 }
 
+.skill-table-wrap { overflow-x: auto; margin-bottom: 0.75rem; }
+
+.skill-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.skill-table th {
+  text-align: left;
+  padding: 0.25rem 0.5rem;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-style: normal;
+}
+
+.skill-table td { padding: 0.2rem 0.5rem; border-bottom: 1px solid var(--border); }
+.skill-table tbody tr:last-child td { border-bottom: none; }
+.skill-table tbody tr { cursor: pointer; }
+.skill-table tbody tr:hover td { background: var(--bg); }
+.skill-table tr.unranked td { color: var(--muted); }
+.skill-table td:nth-child(3),
+.skill-table td:nth-child(4),
+.skill-table th:nth-child(3),
+.skill-table th:nth-child(4) { text-align: center; width: 3rem; }
+
 .rules-body {
   line-height: 1.7;
 }

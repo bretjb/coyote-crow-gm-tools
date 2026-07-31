@@ -145,9 +145,10 @@ function renderFullCard(npc, allSkills) {
         <div><span style="color:var(--muted);">${k}:</span> <strong>${v}</strong></div>`).join('')}
     </div>
 
-    <h3 style="margin-bottom:0.5rem;">Skills <span style="color:var(--muted);font-size:0.75rem;">(click to roll)</span></h3>
-    <div id="skill-list" style="margin-bottom:0.75rem;"></div>
-    <div id="skill-roll-result" style="margin-bottom:0.75rem;"></div>
+    <h3 style="margin:0.75rem 0 0.35rem;">General Skills <span style="color:var(--muted);font-size:0.75rem;font-weight:normal;">(click to roll)</span></h3>
+    <div id="general-skill-table" class="skill-table-wrap"></div>
+    <div id="spec-skill-section"></div>
+    <div id="skill-roll-result" style="min-height:1.5rem;margin-bottom:0.75rem;"></div>
 
     <h3 style="margin-bottom:0.25rem;">Ability</h3>
     <p style="margin-bottom:0.75rem;"><strong>${npc.ability.name}</strong> — ${npc.ability.description}
@@ -155,35 +156,101 @@ function renderFullCard(npc, allSkills) {
     </p>
   `;
 
-  // Render skill buttons
-  const skillList = card.querySelector('#skill-list');
+  // General skills table — all 28 skills, unranked rows muted
   const rollResult = card.querySelector('#skill-roll-result');
-  for (const [skillName, data] of Object.entries(npc.skills)) {
-    const btn = document.createElement('button');
-    btn.className = 'secondary';
-    btn.style.cssText = 'margin:0.2rem;font-size:0.8rem;padding:0.3rem 0.6rem;';
-    const specLabel = data.specialized ? ` [${data.specialized.name} ${data.specialized.rank}]` : '';
-    btn.textContent = `${skillName} ${data.general}${specLabel}`;
-    btn.dataset.skillName = skillName;
-    skillList.appendChild(btn);
+  card.querySelector('#general-skill-table').appendChild(
+    buildSkillTable(allSkills, npc.stats, npc.skills)
+  );
+
+  // Specialized skills table — only if any exist
+  const specEntries = Object.entries(npc.skills)
+    .filter(([, d]) => d.specialized)
+    .map(([generalName, d]) => ({ generalName, name: d.specialized.name, rank: d.specialized.rank }));
+  if (specEntries.length > 0) {
+    const sec = card.querySelector('#spec-skill-section');
+    sec.innerHTML = '<h3 style="margin:0.75rem 0 0.35rem;">Specialized Skills</h3>';
+    const wrap = document.createElement('div');
+    wrap.className = 'skill-table-wrap';
+    wrap.appendChild(buildSpecTable(allSkills, npc.stats, specEntries));
+    sec.appendChild(wrap);
   }
 
-  // Wire skill roll clicks using event delegation
-  skillList.addEventListener('click', e => {
-    const btn = e.target.closest('button[data-skill-name]');
-    if (!btn) return;
-    const skillName = btn.dataset.skillName;
-    const skillDef = allSkills.find(s => s.name === skillName);
-    if (!skillDef) return;
-    const poolSize = skillDef.diceCheck.reduce((sum, stat) => sum + (npc.stats[stat] || 0), 0);
-    const results = rollDice(poolSize);
+  // Roll handler — shared by both tables
+  card.addEventListener('click', e => {
+    const row = e.target.closest('tr[data-pool]');
+    if (!row) return;
+    const pool = parseInt(row.dataset.pool, 10);
+    const label = row.dataset.skillName;
+    const results = rollDice(pool);
     const successes = countSuccesses(results, 8);
     const faces = results.map(r => `<span class="die${r >= 8 ? ' success' : ''}">${r}</span>`).join('');
-    rollResult.innerHTML = `<strong>${skillName}</strong> (${poolSize} dice): ${faces} — <strong>${successes} success${successes !== 1 ? 'es' : ''}</strong>`;
+    rollResult.innerHTML = `<strong>${label}</strong> (${pool} dice): ${faces} — <strong>${successes} success${successes !== 1 ? 'es' : ''}</strong>`;
   });
 
   appendCopyBtn(card, npcToText(npc));
   return card;
+}
+
+function skillPool(skillDef, stats, rank) {
+  const vals = skillDef.diceCheck.map(s => stats[s] || 0);
+  const higher = Math.max(...vals);
+  const lower = Math.min(...vals);
+  return rank >= 1 ? higher + rank : lower;
+}
+
+function buildSkillTable(allSkills, stats, acquiredSkills) {
+  const table = document.createElement('table');
+  table.className = 'skill-table';
+  table.innerHTML = '<thead><tr><th>Skill</th><th>Stat</th><th>Rank</th><th>Total</th></tr></thead>';
+  const tbody = document.createElement('tbody');
+
+  for (const skillDef of allSkills) {
+    const acquired = acquiredSkills[skillDef.name];
+    const rank = acquired ? acquired.general : 0;
+    const vals = skillDef.diceCheck.map(s => stats[s] || 0);
+    const higher = Math.max(...vals);
+    const lower = Math.min(...vals);
+    const usedVal = rank >= 1 ? higher : lower;
+    const usedName = rank >= 1
+      ? skillDef.diceCheck[vals.indexOf(higher)]
+      : skillDef.diceCheck[vals.lastIndexOf(lower)];
+    const pool = rank >= 1 ? higher + rank : lower;
+
+    const tr = document.createElement('tr');
+    if (rank === 0) tr.className = 'unranked';
+    tr.dataset.pool = pool;
+    tr.dataset.skillName = skillDef.name + (skillDef.requiresRank ? '*' : '');
+    tr.innerHTML = `<td>${skillDef.name}${skillDef.requiresRank ? '<span style="color:var(--muted);">*</span>' : ''}</td><td>${usedName} ${usedVal}</td><td>${rank}</td><td>${pool}</td>`;
+    tbody.appendChild(tr);
+  }
+
+  table.appendChild(tbody);
+  return table;
+}
+
+function buildSpecTable(allSkills, stats, specEntries) {
+  const table = document.createElement('table');
+  table.className = 'skill-table';
+  table.innerHTML = '<thead><tr><th>Skill</th><th>Stat</th><th>Rank</th><th>Total</th></tr></thead>';
+  const tbody = document.createElement('tbody');
+
+  for (const { generalName, name, rank } of specEntries) {
+    const skillDef = allSkills.find(s => s.name === generalName);
+    if (!skillDef) continue;
+    const vals = skillDef.diceCheck.map(s => stats[s] || 0);
+    const higher = Math.max(...vals);
+    const higherName = skillDef.diceCheck[vals.indexOf(higher)];
+    const pool = higher + rank;
+
+    const tr = document.createElement('tr');
+    tr.dataset.pool = pool;
+    tr.dataset.skillName = `${name} (${generalName})`;
+    tr.innerHTML = `<td>${name} <span style="color:var(--muted);font-size:0.8rem;">${generalName}</span></td><td>${higherName} ${higher}</td><td>${rank}</td><td>${pool}</td>`;
+    tbody.appendChild(tr);
+  }
+
+  table.appendChild(tbody);
+  return table;
 }
 
 function appendCopyBtn(card, text) {
