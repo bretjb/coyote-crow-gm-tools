@@ -6,7 +6,7 @@
 
 **Architecture:** Single `index.html` shell with tab navigation. Each feature is a JS module that exports `init(container)`. Shared utilities (`dice.js`) are imported directly. All state is session-only (JS variables); no localStorage writes.
 
-**Tech Stack:** Vanilla JS ES modules, no bundler, no framework. CSS custom properties. Service worker for PWA caching. `marked.min.js` (UMD, local file) for markdown rendering. Node.js `assert` module for unit tests on pure functions.
+**Tech Stack:** Vanilla JS ES modules, no bundler, no framework. CSS custom properties. Service worker for PWA caching. `marked.min.js` (UMD, local file) for markdown rendering.
 
 ## Global Constraints
 
@@ -37,7 +37,7 @@
 - [ ] **Step 1: Create directory structure**
 
 ```bash
-mkdir -p css js/lib data/rules tests
+mkdir -p css js/lib data/rules
 ```
 
 - [ ] **Step 2: Write `index.html`**
@@ -252,7 +252,6 @@ git commit -m "feat: app scaffold with tab routing and stub modules"
 
 **Files:**
 - Create: `js/dice.js`
-- Create: `tests/test-dice.js`
 
 **Interfaces:**
 - Produces:
@@ -260,49 +259,7 @@ git commit -m "feat: app scaffold with tab routing and stub modules"
   - `countSuccesses(results: number[], target: number): number` — count elements ≥ target
   - `roll(count: number, target?: number): { results: number[], successes: number, target: number }` — convenience wrapper, default target 8
 
-- [ ] **Step 1: Write `tests/test-dice.js`**
-
-```javascript
-import assert from 'node:assert/strict';
-import { rollDice, countSuccesses, roll } from '../js/dice.js';
-
-// rollDice returns correct count
-const r5 = rollDice(5);
-assert.equal(r5.length, 5, 'rollDice: length matches count');
-assert.ok(r5.every(d => d >= 1 && d <= 12), 'rollDice: all values 1-12');
-
-// rollDice(1) gives a single value
-const r1 = rollDice(1);
-assert.equal(r1.length, 1);
-
-// countSuccesses
-assert.equal(countSuccesses([8, 9, 3, 12, 7], 8), 3, 'countSuccesses: 8,9,12 pass threshold 8');
-assert.equal(countSuccesses([1, 2, 3], 8), 0, 'countSuccesses: none pass');
-assert.equal(countSuccesses([8, 8, 8], 8), 3, 'countSuccesses: all pass exactly');
-assert.equal(countSuccesses([], 8), 0, 'countSuccesses: empty array');
-
-// roll wrapper
-const result = roll(4, 8);
-assert.equal(result.results.length, 4);
-assert.equal(result.target, 8);
-assert.equal(result.successes, countSuccesses(result.results, 8));
-
-// roll uses default target 8
-const r8 = roll(3);
-assert.equal(r8.target, 8);
-
-console.log('All dice tests passed.');
-```
-
-- [ ] **Step 2: Run test — verify it fails**
-
-```bash
-node --experimental-vm-modules tests/test-dice.js
-```
-
-Expected: error (module not found or function not defined).
-
-- [ ] **Step 3: Write `js/dice.js`**
+- [ ] **Step 1: Write `js/dice.js`**
 
 ```javascript
 export function rollDice(count) {
@@ -319,18 +276,10 @@ export function roll(count, target = 8) {
 }
 ```
 
-- [ ] **Step 4: Run test — verify it passes**
+- [ ] **Step 2: Commit**
 
 ```bash
-node --experimental-vm-modules tests/test-dice.js
-```
-
-Expected: `All dice tests passed.`
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add js/dice.js tests/test-dice.js
+git add js/dice.js
 git commit -m "feat: shared dice utility with rollDice, countSuccesses, roll"
 ```
 
@@ -406,7 +355,6 @@ git commit -m "feat: dice roller tab with d12 pool and success counting"
 **Files:**
 - Create: `data/names.json`
 - Modify: `js/name-gen.js`
-- Create: `tests/test-name-gen.js`
 
 **Interfaces:**
 - Produces:
@@ -432,48 +380,7 @@ git commit -m "feat: dice roller tab with d12 pool and success counting"
 }
 ```
 
-- [ ] **Step 2: Write `tests/test-name-gen.js`**
-
-```javascript
-import assert from 'node:assert/strict';
-import { generateName } from '../js/name-gen.js';
-
-const data = {
-  lists: { group: ['Alice', 'Bob', 'Carol'] },
-  syllables: { prefix: ['Ka'], middle: ['yo'], suffix: ['na'] },
-  _used: {}
-};
-
-// Picks from list
-const name1 = generateName(data);
-assert.ok(['Alice', 'Bob', 'Carol'].includes(name1), `got name from list: ${name1}`);
-
-// Tracks used names
-const seen = new Set();
-for (let i = 0; i < 3; i++) seen.add(generateName(data));
-assert.equal(seen.size, 3, 'all 3 list names returned before repeat');
-
-// Falls back to procedural when list exhausted
-const name4 = generateName(data);
-assert.ok(typeof name4 === 'string' && name4.length > 0, `procedural fallback: ${name4}`);
-
-// Procedural-only data
-const procData = { lists: {}, syllables: { prefix: ['Ka'], middle: ['yo'], suffix: ['na'] }, _used: {} };
-const procName = generateName(procData);
-assert.ok(procName.length > 0, `procedural name: ${procName}`);
-
-console.log('All name-gen tests passed.');
-```
-
-- [ ] **Step 3: Run test — verify it fails**
-
-```bash
-node --experimental-vm-modules tests/test-name-gen.js
-```
-
-Expected: error (module not found).
-
-- [ ] **Step 4: Write `js/name-gen.js`**
+- [ ] **Step 2: Write `js/name-gen.js`**
 
 ```javascript
 let cachedData = null;
@@ -551,22 +458,14 @@ export async function init(container) {
 }
 ```
 
-- [ ] **Step 5: Run test — verify it passes**
-
-```bash
-node --experimental-vm-modules tests/test-name-gen.js
-```
-
-Expected: `All name-gen tests passed.`
-
-- [ ] **Step 6: Verify in browser**
+- [ ] **Step 3: Verify in browser**
 
 Click Names tab. Click "Generate Name" multiple times. Names appear, history list shows last 5. Copy button works.
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 4: Commit**
 
 ```bash
-git add data/names.json js/name-gen.js tests/test-name-gen.js
+git add data/names.json js/name-gen.js
 git commit -m "feat: name generator with curated lists and procedural fallback"
 ```
 
@@ -1111,7 +1010,6 @@ git commit -m "feat: quick NPC generator"
 
 **Files:**
 - Create: `js/npc-character-gen.js`
-- Create: `tests/test-char-gen.js`
 
 **Interfaces:**
 - Produces:
@@ -1119,62 +1017,7 @@ git commit -m "feat: quick NPC generator"
   - `allocateStats(budget: number, priorities: string[]): Record<string, number>`
   - `calcDerivedStats(stats: Record<string, number>): Record<string, number>`
 
-- [ ] **Step 1: Write `tests/test-char-gen.js` (stat section)**
-
-```javascript
-import assert from 'node:assert/strict';
-import { weightedRandom, allocateStats, calcDerivedStats } from '../js/npc-character-gen.js';
-
-const STAT_COSTS = [0, 3, 6, 10, 15];
-
-// weightedRandom always returns an item from the list
-const items = ['a', 'b', 'c'];
-const weights = [1, 10, 1];
-const picks = new Set();
-for (let i = 0; i < 200; i++) picks.add(weightedRandom(items, weights));
-assert.ok(picks.has('b'), 'weighted item picked most');
-assert.ok([...picks].every(p => items.includes(p)), 'only valid items returned');
-
-// allocateStats: budget constraint
-const stats = allocateStats(42, ['Strength', 'Agility']);
-const totalCost = Object.values(stats).reduce((sum, v) => sum + STAT_COSTS[v - 1], 0);
-assert.ok(totalCost <= 42, `stat cost ${totalCost} within budget 42`);
-assert.ok(Object.values(stats).every(v => v >= 1 && v <= 5), 'all stats 1-5');
-assert.equal(Object.keys(stats).length, 9, '9 stats returned');
-
-// priority stats tend to be higher (run many times, check average)
-const STAT_NAMES = ['Strength','Agility','Endurance','Intelligence','Perception','Wisdom','Spirit','Charisma','Will'];
-let prioritySum = 0, otherSum = 0, trials = 100;
-for (let i = 0; i < trials; i++) {
-  const s = allocateStats(42, ['Strength', 'Agility']);
-  prioritySum += s.Strength + s.Agility;
-  otherSum += STAT_NAMES.filter(n => !['Strength','Agility'].includes(n)).reduce((a, n) => a + s[n], 0) / 7;
-}
-assert.ok(prioritySum / trials > otherSum / trials, 'priority stats tend to be higher');
-
-// calcDerivedStats
-const base = { Strength:3, Agility:2, Endurance:2, Intelligence:2, Perception:3, Wisdom:2, Spirit:2, Charisma:3, Will:2 };
-const derived = calcDerivedStats(base);
-assert.equal(derived.Initiative, 2 + 3 + 3, 'Initiative = Agility + Perception + Charisma');
-assert.equal(derived['Physical Defence'], 2 + 2, 'Physical Defence = Agility + Endurance');
-assert.equal(derived['Mental Defence'], 3 + 2, 'Mental Defence = Perception + Wisdom');
-assert.equal(derived['Mystical Defence'], 3 + 2, 'Mystical Defence = Charisma + Will');
-assert.equal(derived.Body, 3 + 2 + 2, 'Body = Strength + Agility + Endurance');
-assert.equal(derived.Mind, 2 + 3 + 2, 'Mind = Intelligence + Perception + Wisdom');
-assert.equal(derived.Soul, 2 + 3 + 2, 'Soul = Spirit + Charisma + Will');
-
-console.log('All stat generation tests passed.');
-```
-
-- [ ] **Step 2: Run test — verify it fails**
-
-```bash
-node --experimental-vm-modules tests/test-char-gen.js
-```
-
-Expected: module not found error.
-
-- [ ] **Step 3: Write stat functions in `js/npc-character-gen.js`**
+- [ ] **Step 1: Write stat functions in `js/npc-character-gen.js`**
 
 ```javascript
 const STAT_NAMES = ['Strength','Agility','Endurance','Intelligence','Perception','Wisdom','Spirit','Charisma','Will'];
@@ -1228,18 +1071,10 @@ export function calcDerivedStats(s) {
 }
 ```
 
-- [ ] **Step 4: Run test — verify it passes**
+- [ ] **Step 2: Commit**
 
 ```bash
-node --experimental-vm-modules tests/test-char-gen.js
-```
-
-Expected: `All stat generation tests passed.`
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add js/npc-character-gen.js tests/test-char-gen.js
+git add js/npc-character-gen.js
 git commit -m "feat: stat allocation and derived stat calculation"
 ```
 
@@ -1249,7 +1084,6 @@ git commit -m "feat: stat allocation and derived stat calculation"
 
 **Files:**
 - Modify: `js/npc-character-gen.js`
-- Modify: `tests/test-char-gen.js`
 
 **Interfaces:**
 - Consumes: `weightedRandom` (already in this file)
@@ -1260,70 +1094,7 @@ git commit -m "feat: stat allocation and derived stat calculation"
 
 The skill allocation algorithm buys general ranks first (weighted by preferred skills), then spends remaining budget on specializations. A skill is eligible for a specialization when its general rank ≥ 2. Specialization rank is capped at `general rank − 1`. Specialization has a 40% chance of being attempted per eligible skill.
 
-- [ ] **Step 1: Add skill/gift/ability tests to `tests/test-char-gen.js`**
-
-Append to the existing file (after the `console.log` line, remove it and add):
-
-```javascript
-import { allocateSkills, selectGiftsBurdens, selectAbility } from '../js/npc-character-gen.js';
-
-// allocateSkills: budget constraint
-const SKILL_COSTS_T = [0, 1, 3, 6, 10, 15, 21];
-const skills = [
-  { name: 'Melee Combat', diceCheck: ['Strength','Agility'], specialized: ['Swords'] },
-  { name: 'Tracking', diceCheck: ['Perception','Wisdom'], specialized: ['Wilderness'] },
-  { name: 'Stealth', diceCheck: ['Agility','Wisdom'], specialized: [] },
-];
-const acquired = allocateSkills(42, skills, ['Melee Combat']);
-let totalSkillCost = 0;
-for (const [name, data] of Object.entries(acquired)) {
-  totalSkillCost += SKILL_COSTS_T[data.general];
-  if (data.specialized) totalSkillCost += SKILL_COSTS_T[data.specialized.rank];
-}
-assert.ok(totalSkillCost <= 42, `skill cost ${totalSkillCost} within budget 42`);
-for (const [name, data] of Object.entries(acquired)) {
-  assert.ok(data.general >= 1 && data.general <= 6, `${name} general rank valid`);
-  if (data.specialized) {
-    assert.ok(data.specialized.rank >= 1, 'spec rank >= 1');
-    assert.ok(data.specialized.rank < data.general, 'spec rank < general rank');
-  }
-}
-
-// selectGiftsBurdens: returns 0-2 items
-const pool = [
-  { name: 'Swift', magnitude: 1 },
-  { name: 'Slow', magnitude: -1 },
-  { name: 'Strong', magnitude: 2 },
-];
-const gbCounts = new Set();
-for (let i = 0; i < 100; i++) gbCounts.add(selectGiftsBurdens(pool).length);
-assert.ok([...gbCounts].every(c => c >= 0 && c <= 2), 'gift/burden count 0-2');
-
-// selectAbility: returns one ability from pool
-const abilities = [
-  { id: 'a1', name: 'Iron Body', diceCheck: ['Strength','Endurance'] },
-  { id: 'a2', name: 'Spirit Sight', diceCheck: ['Spirit','Perception'] },
-];
-const ability = selectAbility(abilities, ['Strength', 'Endurance']);
-assert.ok(abilities.includes(ability), 'returned ability from pool');
-
-// Priority ability weighted higher (run many times)
-const picks100 = Array.from({length:200}, () => selectAbility(abilities, ['Strength','Endurance']));
-const a1Count = picks100.filter(a => a.id === 'a1').length;
-assert.ok(a1Count > 80, `priority ability selected more often: ${a1Count}/200`);
-
-console.log('All character generation tests passed.');
-```
-
-- [ ] **Step 2: Run test — verify new tests fail**
-
-```bash
-node --experimental-vm-modules tests/test-char-gen.js
-```
-
-Expected: error on `allocateSkills` not exported.
-
-- [ ] **Step 3: Add skill/gift/ability functions to `js/npc-character-gen.js`**
+- [ ] **Step 1: Add skill/gift/ability functions to `js/npc-character-gen.js`**
 
 Append after `calcDerivedStats`:
 
@@ -1414,18 +1185,10 @@ export function selectAbility(abilities, priorities) {
 }
 ```
 
-- [ ] **Step 4: Run test — verify all pass**
+- [ ] **Step 2: Commit**
 
 ```bash
-node --experimental-vm-modules tests/test-char-gen.js
-```
-
-Expected: `All character generation tests passed.`
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add js/npc-character-gen.js tests/test-char-gen.js
+git add js/npc-character-gen.js
 git commit -m "feat: skill allocation, gift/burden selection, ability selection"
 ```
 
