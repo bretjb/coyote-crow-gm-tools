@@ -1,0 +1,14 @@
+{
+  "lists": {
+    "placeholder": [
+      "Ahanu", "Ayasha", "Chayton", "Chenoa", "Dakota",
+      "Istas", "Kaya", "Lenora", "Mika", "Nizhoni",
+      "Rowtag", "Shilah", "Takoda", "Winona", "Yuma"
+    ]
+  },
+  "syllables": {
+    "prefix": ["Ah", "Ay", "Ch", "Da", "Is", "Ka", "Le", "Mi", "Ni", "Ro", "Sh", "Ta", "Wi", "Yu"],
+    "middle": ["an", "ay", "ot", "en", "ta", "ya", "no", "ka", "zh", "wt"],
+    "suffix": ["u", "a", "on", "ah", "ota", "sha", "ni", "ka", "ra"]
+  }
+}
