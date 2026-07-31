@@ -47,3 +47,86 @@ export function calcDerivedStats(s) {
     Soul: s.Spirit + s.Charisma + s.Will,
   };
 }
+
+export function allocateSkills(budget, allSkills, preferredNames) {
+  const acquired = {}; // name -> { general, specialized?: { name, rank } }
+  let remaining = budget;
+
+  // Phase 1: buy general ranks
+  while (remaining > 0) {
+    const affordable = allSkills.filter(skill => {
+      const cur = (acquired[skill.name]?.general) || 0;
+      if (cur >= 6) return false;
+      return (SKILL_COSTS[cur + 1] - SKILL_COSTS[cur]) <= remaining;
+    });
+    if (affordable.length === 0) break;
+
+    const weights = affordable.map(s => preferredNames.includes(s.name) ? 3 : 1);
+    const chosen = weightedRandom(affordable, weights);
+    const cur = (acquired[chosen.name]?.general) || 0;
+    const cost = SKILL_COSTS[cur + 1] - SKILL_COSTS[cur];
+    remaining -= cost;
+    if (!acquired[chosen.name]) acquired[chosen.name] = { general: 0 };
+    acquired[chosen.name].general = cur + 1;
+  }
+
+  // Phase 2: buy specializations for eligible skills (general >= 2, 40% chance each)
+  for (const [name, data] of Object.entries(acquired)) {
+    if (data.general < 2 || remaining <= 0) continue;
+    if (Math.random() > 0.4) continue;
+    const skill = allSkills.find(s => s.name === name);
+    if (!skill || skill.specialized.length === 0) continue;
+
+    // Max spec rank = general - 1
+    const maxSpecRank = data.general - 1;
+    // Find highest affordable spec rank
+    let buyRank = 0;
+    for (let r = 1; r <= maxSpecRank; r++) {
+      if (SKILL_COSTS[r] <= remaining) buyRank = r;
+    }
+    if (buyRank === 0) continue;
+
+    remaining -= SKILL_COSTS[buyRank];
+    const specName = skill.specialized[Math.floor(Math.random() * skill.specialized.length)];
+    data.specialized = { name: specName, rank: buyRank };
+  }
+
+  return acquired;
+}
+
+export function selectGiftsBurdens(pool) {
+  // Count: 30% none, 50% one, 20% two
+  const countWeights = [30, 50, 20];
+  const count = weightedRandom([0, 1, 2], countWeights);
+  if (count === 0 || pool.length === 0) return [];
+
+  // Magnitude weights: ±1 = 35% each, ±2 = 7% each, ±3 = 1% each
+  const magWeights = { 1: 35, '-1': 35, 2: 7, '-2': 7, 3: 1, '-3': 1 };
+  const results = [];
+  const used = new Set();
+
+  for (let i = 0; i < count; i++) {
+    const magTotal = Object.values(magWeights).reduce((a, b) => a + b, 0);
+    let r = Math.random() * magTotal;
+    let chosenMag = 1;
+    for (const [mag, w] of Object.entries(magWeights)) {
+      r -= w;
+      if (r <= 0) { chosenMag = parseInt(mag); break; }
+    }
+    const candidates = pool.filter(g => g.magnitude === chosenMag && !used.has(g.name));
+    if (candidates.length === 0) continue;
+    const chosen = candidates[Math.floor(Math.random() * candidates.length)];
+    used.add(chosen.name);
+    results.push(chosen);
+  }
+
+  return results;
+}
+
+export function selectAbility(abilities, priorities) {
+  const weights = abilities.map(a => {
+    const overlap = a.diceCheck.filter(s => priorities.includes(s)).length;
+    return 1 + overlap * 2;
+  });
+  return weightedRandom(abilities, weights);
+}
