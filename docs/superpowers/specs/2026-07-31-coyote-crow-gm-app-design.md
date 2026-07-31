@@ -113,7 +113,7 @@ Generates a mechanically complete NPC by following the C&C character creation pi
    - Specialized skill rank must always be higher than the associated general skill rank.
    - Skills are drawn from the archetype's curated skill pool, weighted so the archetype's primary skills are purchased first. Points are spent greedily until the 42-point budget is exhausted.
 
-8. **Ability** — one ability selected from the archetype's eligible ability pool in `abilities.json`. Abilities are associated with stats; the generator selects from abilities whose stat prerequisites are met by the generated stat block.
+8. **Ability** — one ability selected from the archetype's eligible ability pool in `abilities.json`. Abilities have associated dice-check stats (e.g., "Ancestor's Storm" uses Spirit + Charisma) rather than stat prerequisites. The archetype's ability pool is curated to include abilities whose dice-check stats align with the archetype's priority stats, so the selected ability is naturally coherent with the generated stat block.
 
 9. **Derived stats** — calculated automatically from final stat values:
 
@@ -211,8 +211,8 @@ Result displays as a full character sheet card with a "Copy" button.
 [
   {
     "id": "ability-id-1",
-    "name": "Battle Hardened",
-    "statRequirement": { "Strength": 3 },
+    "name": "Ancestor's Storm",
+    "diceCheck": ["Spirit", "Charisma"],
     "description": "..."
   }
 ]
