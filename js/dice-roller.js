@@ -21,7 +21,7 @@ export async function init(container) {
   const summaryEl = container.querySelector('#dice-summary');
 
   container.querySelector('#dice-roll').addEventListener('click', () => {
-    const count = Math.max(1, parseInt(countInput.value, 10) || 1);
+    const count = Math.max(1, Math.min(30, parseInt(countInput.value, 10) || 1));
     const target = Math.max(1, Math.min(12, parseInt(targetInput.value, 10) || 8));
     const results = rollDice(count);
     const successes = countSuccesses(results, target);

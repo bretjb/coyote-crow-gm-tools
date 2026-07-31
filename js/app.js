@@ -7,12 +7,17 @@ import { init as initRules } from './rules.js';
 const tabInits = { names: initNames, npcs: initNpcs, dice: initDice, initiative: initInitiative, rules: initRules };
 const initialized = new Set();
 
-function activateTab(name) {
+async function activateTab(name) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('hidden', p.id !== `tab-${name}`));
   if (!initialized.has(name)) {
-    tabInits[name](document.getElementById(`tab-${name}`));
-    initialized.add(name);
+    const panel = document.getElementById(`tab-${name}`);
+    try {
+      await tabInits[name](panel);
+      initialized.add(name);
+    } catch {
+      panel.innerHTML = '<p class="error">Data unavailable — please reload while online once to enable offline use.</p>';
+    }
   }
 }
 
