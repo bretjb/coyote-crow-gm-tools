@@ -77,7 +77,7 @@ Generates a mechanically complete NPC by following the C&C character creation pi
 
 1. **Motivation** — random pick from `motivations.json`
 
-2. **Archetype** — random pick from `archetypes.json`. The chosen archetype carries a stat priority list, a curated skill pool, and an eligible ability pool that bias all subsequent random choices.
+2. **Archetype** — random pick from `archetypes.json`. The chosen archetype carries a stat priority list and preferred skill list that *bias* (not restrict) subsequent random choices. Any NPC can end up with any stat distribution or skill; the archetype just makes certain outcomes more likely.
 
 3. **Demographic** — weighted random picks:
    - Age, Gender, Sexuality each drawn from weighted option tables in `archetypes.json` (e.g., 33% Young, 50% Adult, 17% Elder)
@@ -99,7 +99,7 @@ Generates a mechanically complete NPC by following the C&C character creation pi
    | 4         | 10         |
    | 5         | 15         |
 
-   - Allocation is random but archetype-weighted: the archetype's priority stats receive more points on average. All 9 stats start at 1 (0 cost). Remaining points are distributed randomly with weight skewed toward priority stats until the 42-point budget is spent.
+   - All 9 stats are available to every NPC. Allocation is random but archetype-weighted: the archetype's priority stats receive more points on average. All 9 stats start at 1 (0 cost). Remaining points are distributed randomly with weight skewed toward priority stats until the 42-point budget is spent.
 
 7. **Skills** — 42 points to spend from `skills.json`. Skills have general ranks and optional specialized ranks.
 
@@ -113,9 +113,9 @@ Generates a mechanically complete NPC by following the C&C character creation pi
    | 6           | 21          | 5               | 15              |
 
    - Specialized skill rank must always be higher than the associated general skill rank.
-   - Skills are drawn from the archetype's curated skill pool, weighted so the archetype's primary skills are purchased first. Points are spent greedily until the 42-point budget is exhausted.
+   - All skills are available to every NPC. Skills are selected from the full list in `skills.json`, weighted so the archetype's preferred skills are purchased first. Points are spent greedily until the 42-point budget is exhausted.
 
-8. **Ability** — one ability selected from the archetype's eligible ability pool in `abilities.json`. Abilities have associated dice-check stats (e.g., "Ancestor's Storm" uses Spirit + Charisma) rather than stat prerequisites. The archetype's ability pool is curated to include abilities whose dice-check stats align with the archetype's priority stats, so the selected ability is naturally coherent with the generated stat block.
+8. **Ability** — one ability selected from all abilities in `abilities.json`, weighted toward those whose `diceCheck` stats overlap with the archetype's stat priorities. Any ability can be selected; the weighting just makes thematically fitting abilities more likely.
 
 9. **Derived stats** — calculated automatically from final stat values:
 
@@ -194,8 +194,7 @@ A standalone tab for ad-hoc rolls.
   {
     "name": "Warrior",
     "statPriorities": ["Strength", "Agility", "Endurance"],
-    "skillPool": ["Melee Combat", "Athletics", "Intimidation"],
-    "abilityPool": ["ability-id-1", "ability-id-2"],
+    "preferredSkills": ["Melee Combat", "Athletics", "Intimidation"],
     "demographics": {
       "age": [
         { "value": "Young", "weight": 33 },
@@ -208,6 +207,8 @@ A standalone tab for ad-hoc rolls.
   }
 ]
 ```
+
+`statPriorities` and `preferredSkills` are weighting hints only — any stat or skill can appear on any NPC. The generator gives preferred items higher selection probability but draws from the full lists in `skills.json` and the 9 core stats.
 
 ### `skills.json`
 ```json
