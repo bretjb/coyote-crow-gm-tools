@@ -1,0 +1,14 @@
+[
+  { "name": "Tracking", "diceCheck": ["Perception", "Wisdom"], "specialized": ["Wilderness Tracking", "Urban Tracking"] },
+  { "name": "Melee Combat", "diceCheck": ["Strength", "Agility"], "specialized": ["Blades", "Clubs", "Unarmed"] },
+  { "name": "Ranged Combat", "diceCheck": ["Agility", "Perception"], "specialized": ["Bows", "Thrown"] },
+  { "name": "Stealth", "diceCheck": ["Agility", "Wisdom"], "specialized": ["Shadowing", "Hiding"] },
+  { "name": "Athletics", "diceCheck": ["Strength", "Endurance"], "specialized": ["Climbing", "Swimming", "Running"] },
+  { "name": "Healing", "diceCheck": ["Intelligence", "Wisdom"], "specialized": ["Herbalism", "Field Medicine"] },
+  { "name": "Persuasion", "diceCheck": ["Charisma", "Wisdom"], "specialized": ["Negotiation", "Deception", "Inspiration"] },
+  { "name": "Survival", "diceCheck": ["Endurance", "Wisdom"], "specialized": ["Foraging", "Navigation", "Shelter"] },
+  { "name": "Lore", "diceCheck": ["Intelligence", "Wisdom"], "specialized": ["Ancestor Lore", "Spirit Lore", "History"] },
+  { "name": "Intimidation", "diceCheck": ["Strength", "Charisma"], "specialized": [] },
+  { "name": "Spirit Sense", "diceCheck": ["Spirit", "Perception"], "specialized": [] },
+  { "name": "Crafting", "diceCheck": ["Intelligence", "Agility"], "specialized": ["Weapons", "Tools", "Textiles"] }
+]

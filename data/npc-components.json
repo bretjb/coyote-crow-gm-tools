@@ -1,0 +1,14 @@
+{
+  "roles": [
+    "Hunter", "Trader", "Elder", "Warrior", "Healer",
+    "Scout", "Craftsperson", "Storyteller", "Guide", "Farmer"
+  ],
+  "personalities": [
+    "Cautious", "Bold", "Curious", "Reserved", "Warm",
+    "Stern", "Playful", "Melancholic", "Fierce", "Gentle"
+  ],
+  "motivations": [
+    "Protect family", "Seek knowledge", "Gain honor", "Find belonging",
+    "Avenge a wrong", "Restore balance", "Explore the unknown"
+  ]
+}

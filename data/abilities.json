@@ -1,0 +1,9 @@
+[
+  { "id": "ancestors-storm", "name": "Ancestor's Storm", "diceCheck": ["Spirit", "Charisma"], "description": "Call upon ancestral power to strike fear." },
+  { "id": "iron-body", "name": "Iron Body", "diceCheck": ["Strength", "Endurance"], "description": "Harden the body against blows." },
+  { "id": "shadow-step", "name": "Shadow Step", "diceCheck": ["Agility", "Spirit"], "description": "Move unseen even in plain sight." },
+  { "id": "spirit-sight", "name": "Spirit Sight", "diceCheck": ["Spirit", "Perception"], "description": "See what others cannot." },
+  { "id": "healing-touch", "name": "Healing Touch", "diceCheck": ["Spirit", "Wisdom"], "description": "Channel healing into another." },
+  { "id": "battle-cry", "name": "Battle Cry", "diceCheck": ["Charisma", "Will"], "description": "Rally allies with a powerful shout." },
+  { "id": "read-the-land", "name": "Read the Land", "diceCheck": ["Perception", "Wisdom"], "description": "Sense danger and opportunity from the environment." }
+]

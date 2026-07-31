@@ -1,0 +1,10 @@
+[
+  { "name": "Fleet-Footed", "magnitude": 1, "description": "Moves faster than most." },
+  { "name": "Eagle Eyes", "magnitude": 1, "description": "Keen eyesight." },
+  { "name": "Iron Will", "magnitude": 2, "description": "Resists mental pressure." },
+  { "name": "Ancestor's Favor", "magnitude": 3, "description": "Blessed by the spirits." },
+  { "name": "Slow Reflexes", "magnitude": -1, "description": "Reacts a half-step late." },
+  { "name": "Haunted", "magnitude": -1, "description": "Troubled by dark memories." },
+  { "name": "Frail", "magnitude": -2, "description": "Takes injury more easily." },
+  { "name": "Cursed", "magnitude": -3, "description": "Misfortune follows close behind." }
+]

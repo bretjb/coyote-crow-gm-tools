@@ -1,0 +1,94 @@
+[
+  {
+    "name": "Warrior",
+    "statPriorities": ["Strength", "Agility", "Endurance"],
+    "preferredSkills": ["Melee Combat", "Athletics", "Intimidation"],
+    "demographics": {
+      "age": [
+        { "value": "Young", "weight": 35 },
+        { "value": "Adult", "weight": 50 },
+        { "value": "Elder", "weight": 15 }
+      ],
+      "gender": [
+        { "value": "Man", "weight": 40 },
+        { "value": "Woman", "weight": 40 },
+        { "value": "Two-Spirit", "weight": 20 }
+      ],
+      "sexuality": [
+        { "value": "Heterosexual", "weight": 50 },
+        { "value": "Homosexual", "weight": 20 },
+        { "value": "Bisexual", "weight": 20 },
+        { "value": "Asexual", "weight": 10 }
+      ]
+    }
+  },
+  {
+    "name": "Scout",
+    "statPriorities": ["Agility", "Perception", "Endurance"],
+    "preferredSkills": ["Tracking", "Stealth", "Survival", "Ranged Combat"],
+    "demographics": {
+      "age": [
+        { "value": "Young", "weight": 45 },
+        { "value": "Adult", "weight": 45 },
+        { "value": "Elder", "weight": 10 }
+      ],
+      "gender": [
+        { "value": "Man", "weight": 35 },
+        { "value": "Woman", "weight": 40 },
+        { "value": "Two-Spirit", "weight": 25 }
+      ],
+      "sexuality": [
+        { "value": "Heterosexual", "weight": 50 },
+        { "value": "Homosexual", "weight": 20 },
+        { "value": "Bisexual", "weight": 20 },
+        { "value": "Asexual", "weight": 10 }
+      ]
+    }
+  },
+  {
+    "name": "Healer",
+    "statPriorities": ["Spirit", "Wisdom", "Intelligence"],
+    "preferredSkills": ["Healing", "Lore", "Spirit Sense"],
+    "demographics": {
+      "age": [
+        { "value": "Young", "weight": 15 },
+        { "value": "Adult", "weight": 45 },
+        { "value": "Elder", "weight": 40 }
+      ],
+      "gender": [
+        { "value": "Man", "weight": 30 },
+        { "value": "Woman", "weight": 45 },
+        { "value": "Two-Spirit", "weight": 25 }
+      ],
+      "sexuality": [
+        { "value": "Heterosexual", "weight": 50 },
+        { "value": "Homosexual", "weight": 20 },
+        { "value": "Bisexual", "weight": 20 },
+        { "value": "Asexual", "weight": 10 }
+      ]
+    }
+  },
+  {
+    "name": "Speaker",
+    "statPriorities": ["Charisma", "Will", "Wisdom"],
+    "preferredSkills": ["Persuasion", "Lore", "Intimidation"],
+    "demographics": {
+      "age": [
+        { "value": "Young", "weight": 10 },
+        { "value": "Adult", "weight": 50 },
+        { "value": "Elder", "weight": 40 }
+      ],
+      "gender": [
+        { "value": "Man", "weight": 35 },
+        { "value": "Woman", "weight": 35 },
+        { "value": "Two-Spirit", "weight": 30 }
+      ],
+      "sexuality": [
+        { "value": "Heterosexual", "weight": 50 },
+        { "value": "Homosexual", "weight": 20 },
+        { "value": "Bisexual", "weight": 20 },
+        { "value": "Asexual", "weight": 10 }
+      ]
+    }
+  }
+]
