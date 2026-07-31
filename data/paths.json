@@ -1,9 +1,17 @@
 [
-  "Path of the Hunter",
-  "Path of the Warrior",
-  "Path of the Healer",
-  "Path of the Scholar",
-  "Path of the Wanderer",
-  "Path of the Artisan",
-  "Path of the Speaker"
+  { "name": "Path of the Eagle",   "statBonuses": ["Strength", "Wisdom"] },
+  { "name": "Path of the Bison",   "statBonuses": ["Strength", "Will"] },
+  { "name": "Path of the Beaver",  "statBonuses": ["Endurance", "Perception"] },
+  { "name": "Path of the Coyote",  "statBonuses": ["Agility", "Intelligence"] },
+  { "name": "Path of the Fox",     "statBonuses": ["Agility", "Spirit"] },
+  { "name": "Path of the Owl",     "statBonuses": ["Endurance", "Intelligence"] },
+  { "name": "Path of the Badger",  "statBonuses": ["Intelligence", "Will"] },
+  { "name": "Path of the Deer",    "statBonuses": ["Wisdom", "Charisma"] },
+  { "name": "Path of the Spider",  "statBonuses": ["Perception", "Strength"] },
+  { "name": "Path of the Falcon",  "statBonuses": ["Perception", "Spirit"] },
+  { "name": "Path of the Snake",   "statBonuses": ["Spirit", "Endurance"] },
+  { "name": "Path of the Crow",    "statBonuses": ["Spirit", "Wisdom"] },
+  { "name": "Path of the Salmon",  "statBonuses": ["Will", "Agility"] },
+  { "name": "Path of the Bear",    "statBonuses": ["Charisma", "Strength"] },
+  { "name": "Path of the Raccoon", "statBonuses": ["Charisma", "Intelligence"] }
 ]

@@ -61,16 +61,28 @@ export async function init(container) {
 }
 
 function generateFullNpc({ nameData, motivations, paths, giftsAndBurdens, allSkills, abilities, archetype }) {
+  const path = pick(paths);
   const stats = allocateStats(42, archetype.statPriorities);
+  // Archetype grants +1 to its focus stat; path grants +1 to each of its two stats
+  stats[archetype.statBonus]++;
+  path.statBonuses.forEach(stat => { stats[stat]++; });
+
   const skills = allocateSkills(42, allSkills, archetype.preferredSkills);
+  // Archetype grants a free rank in one of its two skill options
+  const freeSkill = pick(archetype.freeSkillOptions);
+  if (!skills[freeSkill]) skills[freeSkill] = { general: 1 };
+  else skills[freeSkill].general++;
+
   return {
     name: generateName(nameData),
     motivation: pick(motivations),
     archetype: archetype.name,
+    archetypeStatBonus: archetype.statBonus,
+    freeSkill,
     age: weightedPickDemographic(archetype.demographics.age),
     gender: weightedPickDemographic(archetype.demographics.gender),
     sexuality: weightedPickDemographic(archetype.demographics.sexuality),
-    path: pick(paths),
+    path,
     giftsAndBurdens: selectGiftsBurdens(giftsAndBurdens),
     stats,
     skills,
@@ -112,9 +124,10 @@ function renderFullCard(npc, allSkills) {
 
   card.innerHTML = `
     <h2>${npc.name}</h2>
-    <p style="color:var(--muted);margin-bottom:0.75rem;">${npc.archetype} · ${npc.age} · ${npc.gender} · ${npc.sexuality}</p>
-    <p><strong>Motivation:</strong> ${npc.motivation}</p>
-    <p><strong>Path:</strong> ${npc.path}</p>
+    <p style="color:var(--muted);margin-bottom:0.25rem;">${npc.archetype} · ${npc.age} · ${npc.gender} · ${npc.sexuality}</p>
+    <p style="color:var(--muted);font-size:0.8rem;margin-bottom:0.75rem;">+1 ${npc.archetypeStatBonus} · free rank: ${npc.freeSkill}</p>
+    <p><strong>Motivation:</strong> ${npc.motivation.name}</p>
+    <p><strong>Path:</strong> ${npc.path.name} <span style="color:var(--muted);font-size:0.85rem;">(+1 ${npc.path.statBonuses.join(', +1 ')})</span></p>
     <p style="margin-bottom:0.75rem;"><strong>Gifts/Burdens:</strong> ${gb}</p>
 
     <h3 style="margin-bottom:0.5rem;">Stats</h3>
@@ -190,5 +203,5 @@ function npcToText(npc) {
     const spec = d.specialized ? ` [${d.specialized.name} ${d.specialized.rank}]` : '';
     return `  ${k} ${d.general}${spec}`;
   }).join('\n');
-  return `${npc.name}\n${npc.archetype} · ${npc.age} · ${npc.gender}\nMotivation: ${npc.motivation}\nPath: ${npc.path}\nGifts/Burdens: ${gb}\n\nStats:\n${stats}\n\nDerived:\n${derived}\n\nSkills:\n${skills}\n\nAbility: ${npc.ability.name} — ${npc.ability.description}`;
+  return `${npc.name}\n${npc.archetype} (+1 ${npc.archetypeStatBonus}, free: ${npc.freeSkill}) · ${npc.age} · ${npc.gender} · ${npc.sexuality}\nMotivation: ${npc.motivation.name}\nPath: ${npc.path.name} (+1 ${npc.path.statBonuses.join(', +1 ')})\nGifts/Burdens: ${gb}\n\nStats:\n${stats}\n\nDerived:\n${derived}\n\nSkills:\n${skills}\n\nAbility: ${npc.ability.name} — ${npc.ability.description}`;
 }
