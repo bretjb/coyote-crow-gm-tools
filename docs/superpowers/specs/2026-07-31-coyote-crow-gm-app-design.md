@@ -4,7 +4,7 @@
 
 ## Overview
 
-An offline-first PWA to help run sessions of the Coyote and Crow TTRPG. Built with vanilla JS and no framework. Four features: Name Generator, NPC Generator, Initiative Tracker, and Rule Summary. All content is session-only; nothing persists between sessions.
+An offline-first PWA to help run sessions of the Coyote and Crow TTRPG. Built with vanilla JS and no framework. Five features: Name Generator, NPC Generator, Initiative Tracker, Dice Roller, and Rule Summary. All content is session-only; nothing persists between sessions.
 
 ## File Structure
 
@@ -21,7 +21,9 @@ coyote-crow/
 │   ├── npc-gen.js              # NPC generator feature
 │   ├── npc-character-gen.js    # Full character generation logic
 │   ├── initiative.js           # Initiative tracker feature
+│   ├── dice-roller.js          # Dice roller feature
 │   ├── rules.js                # Rules display feature
+│   ├── dice.js                 # Shared dice roll utility (pool of d12s, count successes)
 │   └── lib/
 │       └── md.js               # Bundled lightweight markdown parser
 └── data/
@@ -42,7 +44,7 @@ coyote-crow/
 
 Each JS module exports a single `init(container)` function. `app.js` handles tab switching and calls the appropriate `init()` with a `<div>` container when a tab is activated. Modules are self-contained with no shared state.
 
-JSON data files are fetched once on module init and held in memory for the session. No writes back to JSON — all session state lives in JS variables. `npc-gen.js` and `npc-character-gen.js` both import the name generation *function* from `name-gen.js` (not any session state).
+JSON data files are fetched once on module init and held in memory for the session. No writes back to JSON — all session state lives in JS variables. `npc-gen.js` and `npc-character-gen.js` both import the name generation *function* from `name-gen.js` (not any session state). `dice-roller.js` and `npc-gen.js` both import the roll utility from `dice.js`.
 
 ## Features
 
@@ -127,7 +129,18 @@ Generates a mechanically complete NPC by following the C&C character creation pi
    | Mind             | Intelligence + Perception + Wisdom   |
    | Soul             | Spirit + Charisma + Will             |
 
-Result displays as a full character sheet card with a "Copy" button.
+Result displays as a full character sheet card with a "Copy" button. Each skill on the card is a clickable button: clicking it sums the skill's `diceCheck` stat values from the NPC's generated stat block to determine the dice pool size, then triggers a roll using the shared dice roller logic and displays the result inline below the skill.
+
+### Dice Roller
+
+A standalone tab for ad-hoc rolls.
+
+- Number input: how many d12s to roll (minimum 1)
+- Target number input: the success threshold (default 8, editable)
+- "Roll" button: rolls the pool, displays each die result as an individual die face, highlights dice that meet or exceed the target in a success color
+- Shows a summary: e.g., "3 successes out of 5 dice"
+- "Clear" button: resets the display
+- The core roll logic lives in a shared utility function imported by both `dice-roller.js` and `npc-gen.js` so NPC skill rolls and standalone rolls use identical behavior
 
 ### Initiative Tracker
 
@@ -200,8 +213,9 @@ Result displays as a full character sheet card with a "Copy" button.
 ```json
 [
   {
-    "name": "Melee Combat",
-    "specialized": ["Swords", "Axes", "Unarmed"]
+    "name": "Tracking",
+    "diceCheck": ["Perception", "Wisdom"],
+    "specialized": ["Urban Tracking", "Wilderness Tracking"]
   }
 ]
 ```
@@ -233,6 +247,8 @@ Manual verification:
 2. Quick NPC generates a coherent one-card sketch.
 3. Full NPC generates a valid character: stat costs sum to ≤42, skill costs sum to ≤42, specialized ranks exceed general ranks, derived stats match formulas.
 4. Initiative tracker sorts correctly and steps through turns.
-5. Rule Summary renders both sub-tabs from markdown.
-6. Install as PWA from browser.
-7. Disconnect network — verify all features still work offline.
+5. Dice Roller: rolling N dice shows N individual results, successes (≥ target) are highlighted, summary count is correct, Clear resets display.
+6. Full NPC skill click: rolls correct pool size (sum of linked stats), result appears inline.
+7. Rule Summary renders both sub-tabs from markdown.
+8. Install as PWA from browser.
+9. Disconnect network — verify all features still work offline.
