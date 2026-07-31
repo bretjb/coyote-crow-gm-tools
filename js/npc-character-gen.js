@@ -75,7 +75,7 @@ export function allocateSkills(budget, allSkills, preferredNames) {
     if (data.general < 2 || remaining <= 0) continue;
     if (Math.random() > 0.4) continue;
     const skill = allSkills.find(s => s.name === name);
-    if (!skill || skill.specialized.length === 0) continue;
+    if (!skill || !skill.specialized?.length) continue;
 
     // Max spec rank = general - 1
     const maxSpecRank = data.general - 1;
