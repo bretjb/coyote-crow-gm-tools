@@ -1,4 +1,4 @@
-export function init(container) {
+export async function init(container) {
   let combatants = [];
   let activeIndex = 0;
 
