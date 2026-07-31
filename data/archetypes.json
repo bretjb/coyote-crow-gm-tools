@@ -1,7 +1,14 @@
 [
   {
     "name": "Warrior",
-    "statPriorities": ["Strength", "Agility", "Endurance"],
+    "description": "Warriors focus on Strength and receive +1 to Strength during Character creation. They are often soldiers, bodyguards, and professional athletes. They are often comfortable with violence and generally solve their problems with direct physical action.",
+    "keyRole": {
+      "name": "Trail Defender",
+      "description": "Travelers along remote routes are often troubled by bandits, animals, or other dangers. Trail defenders, often an inherited title, are known for protecting certain routes, ensuring those on the route arrive at their destination safely."
+    },
+    "statBonus": "Strength",
+    "statPriorities": ["Strength", "Endurance", "Agility"],
+    "freeSkillOptions": ["Melee Combat", "Athletics"],
     "preferredSkills": ["Melee Combat", "Athletics", "Intimidation"],
     "demographics": {
       "age": [
@@ -10,9 +17,8 @@
         { "value": "Elder", "weight": 15 }
       ],
       "gender": [
-        { "value": "Man", "weight": 40 },
-        { "value": "Woman", "weight": 40 },
-        { "value": "Two-Spirit", "weight": 20 }
+        { "value": "Man", "weight": 50 },
+        { "value": "Woman", "weight": 50 }
       ],
       "sexuality": [
         { "value": "Heterosexual", "weight": 50 },
@@ -24,8 +30,15 @@
   },
   {
     "name": "Scout",
+    "description": "Scouts focus on Agility and receive +1 to Agility during Character creation. They use their flexibility, speed, mobility, or precision in their daily life. They are runners, messengers, explorers, gymnasts, guides, archers, gamers, and more.",
+    "keyRole": {
+      "name": "Seed Keeper",
+      "description": "These people travel extensive lengths and sometimes face great physical dangers in their attempts to find, rescue, and preserve endangered strains of plants."
+    },
+    "statBonus": "Agility",
     "statPriorities": ["Agility", "Perception", "Endurance"],
-    "preferredSkills": ["Tracking", "Stealth", "Survival", "Ranged Combat"],
+    "freeSkillOptions": ["Stealth", "Ranged Combat"],
+    "preferredSkills": ["Stealth", "Ranged Combat", "Tracking", "Athletics"],
     "demographics": {
       "age": [
         { "value": "Young", "weight": 45 },
@@ -33,9 +46,66 @@
         { "value": "Elder", "weight": 10 }
       ],
       "gender": [
-        { "value": "Man", "weight": 35 },
-        { "value": "Woman", "weight": 40 },
-        { "value": "Two-Spirit", "weight": 25 }
+        { "value": "Man", "weight": 45 },
+        { "value": "Woman", "weight": 55 }
+      ],
+      "sexuality": [
+        { "value": "Heterosexual", "weight": 50 },
+        { "value": "Homosexual", "weight": 20 },
+        { "value": "Bisexual", "weight": 20 },
+        { "value": "Asexual", "weight": 10 }
+      ]
+    }
+  },
+  {
+    "name": "Tinkerer",
+    "description": "Intelligence is the Tinkerer's focus and they receive +1 to Intelligence during Character creation. Makers, scientists, engineers, carpenters, biologists, computer programmers, and anyone whose day-to-day work depends on their intellect are Tinkerers. They think their way through their problems and rely upon precise logic.",
+    "keyRole": {
+      "name": "Star Finder",
+      "description": "Astronomers have found that with clearing skies, there is a wealth of knowledge to be discovered by looking up and asking the right questions. These people often want to travel, trying to find new, better vantage points for viewing and experiencing new stellar phenomena."
+    },
+    "statBonus": "Intelligence",
+    "statPriorities": ["Intelligence", "Perception", "Wisdom"],
+    "freeSkillOptions": ["Lore", "Crafting"],
+    "preferredSkills": ["Lore", "Crafting"],
+    "demographics": {
+      "age": [
+        { "value": "Young", "weight": 25 },
+        { "value": "Adult", "weight": 55 },
+        { "value": "Elder", "weight": 20 }
+      ],
+      "gender": [
+        { "value": "Man", "weight": 50 },
+        { "value": "Woman", "weight": 50 }
+      ],
+      "sexuality": [
+        { "value": "Heterosexual", "weight": 50 },
+        { "value": "Homosexual", "weight": 20 },
+        { "value": "Bisexual", "weight": 20 },
+        { "value": "Asexual", "weight": 10 }
+      ]
+    }
+  },
+  {
+    "name": "Seeker",
+    "description": "Perception is the focus for Seekers and they receive +1 to Perception during Character creation. Seekers range from detectives to philosophers to sociologists to bounty hunters, relying on attention to details and the uncovering of hidden things. Seekers see the world through an unusual lens and often question basic assumptions.",
+    "keyRole": {
+      "name": "Reality Seeker",
+      "description": "Understanding the very nature of reality, or even realities plural, is their goal. This role can often take the person to dark and dangerous places, put them in front of rare magics and ceremonies, have them travel to The Black, and face previously unknown spirits."
+    },
+    "statBonus": "Perception",
+    "statPriorities": ["Perception", "Intelligence", "Wisdom"],
+    "freeSkillOptions": ["Tracking", "Lore"],
+    "preferredSkills": ["Tracking", "Lore", "Survival"],
+    "demographics": {
+      "age": [
+        { "value": "Young", "weight": 20 },
+        { "value": "Adult", "weight": 50 },
+        { "value": "Elder", "weight": 30 }
+      ],
+      "gender": [
+        { "value": "Man", "weight": 50 },
+        { "value": "Woman", "weight": 50 }
       ],
       "sexuality": [
         { "value": "Heterosexual", "weight": 50 },
@@ -47,8 +117,15 @@
   },
   {
     "name": "Healer",
-    "statPriorities": ["Spirit", "Wisdom", "Intelligence"],
-    "preferredSkills": ["Healing", "Lore", "Spirit Sense"],
+    "description": "Healers are those who focus on Spirit and receive +1 to Spirit during Character creation. Healers make their way through the world with the strength of their heart and connection to the spiritual realm. Whether guiding herds, healing the sick, or acting as the moral center of their community, they have an ineffable quality. Faith and a belief in the intangible are often essential to Healers.",
+    "keyRole": {
+      "name": "Death Doula",
+      "description": "When death comes, it is helpful to have someone there who can help guide loved ones in practical and spiritual matters during that difficult time. After the horrible death toll of the Awis, many felt a calling to take on a role that would help ease the suffering of survivors."
+    },
+    "statBonus": "Spirit",
+    "statPriorities": ["Spirit", "Wisdom", "Charisma"],
+    "freeSkillOptions": ["Healing", "Spirit Sense"],
+    "preferredSkills": ["Healing", "Spirit Sense", "Lore"],
     "demographics": {
       "age": [
         { "value": "Young", "weight": 15 },
@@ -56,9 +133,8 @@
         { "value": "Elder", "weight": 40 }
       ],
       "gender": [
-        { "value": "Man", "weight": 30 },
-        { "value": "Woman", "weight": 45 },
-        { "value": "Two-Spirit", "weight": 25 }
+        { "value": "Man", "weight": 40 },
+        { "value": "Woman", "weight": 60 }
       ],
       "sexuality": [
         { "value": "Heterosexual", "weight": 50 },
@@ -69,9 +145,16 @@
     }
   },
   {
-    "name": "Speaker",
-    "statPriorities": ["Charisma", "Will", "Wisdom"],
-    "preferredSkills": ["Persuasion", "Lore", "Intimidation"],
+    "name": "Whisperer",
+    "description": "A Whisperer's focus is Charisma and they receive +1 to Charisma during Character creation. Whisperers make their way through the world by sheer charm and force of will and through the manipulation or influence of others, from actors and artists to politicians and con artists.",
+    "keyRole": {
+      "name": "Mockingbird",
+      "description": "The core mission for these people is to listen to, understand, record, and preserve stories, memorizing them if necessary. So many stories were lost after the Awis, and so many new ones are told that these individuals are driven to save every one possible. While much of their job is about convincing those they meet to share their stories, they often find themselves relaying or recreating those stories later."
+    },
+    "statBonus": "Charisma",
+    "statPriorities": ["Charisma", "Spirit", "Will"],
+    "freeSkillOptions": ["Persuasion", "Intimidation"],
+    "preferredSkills": ["Persuasion", "Intimidation"],
     "demographics": {
       "age": [
         { "value": "Young", "weight": 10 },
@@ -79,9 +162,8 @@
         { "value": "Elder", "weight": 40 }
       ],
       "gender": [
-        { "value": "Man", "weight": 35 },
-        { "value": "Woman", "weight": 35 },
-        { "value": "Two-Spirit", "weight": 30 }
+        { "value": "Man", "weight": 50 },
+        { "value": "Woman", "weight": 50 }
       ],
       "sexuality": [
         { "value": "Heterosexual", "weight": 50 },
