@@ -10,30 +10,39 @@ An offline-first PWA to help run sessions of the Coyote and Crow TTRPG. Built wi
 
 ```
 coyote-crow/
-├── index.html              # Shell: tab nav, loads modules
-├── manifest.json           # PWA manifest (name, icons, theme color)
-├── sw.js                   # Service worker: cache-first for all assets
+├── index.html                  # Shell: tab nav, loads modules
+├── manifest.json               # PWA manifest (name, icons, theme color)
+├── sw.js                       # Service worker: cache-first for all assets
 ├── css/
 │   └── style.css
 ├── js/
-│   ├── app.js              # Tab routing, shared init
-│   ├── name-gen.js         # Name generator feature
-│   ├── npc-gen.js          # NPC generator feature
-│   ├── initiative.js       # Initiative tracker feature
-│   └── rules.js            # Rules display feature
+│   ├── app.js                  # Tab routing, shared init
+│   ├── name-gen.js             # Name generator feature
+│   ├── npc-gen.js              # NPC generator feature
+│   ├── npc-character-gen.js    # Full character generation logic
+│   ├── initiative.js           # Initiative tracker feature
+│   ├── rules.js                # Rules display feature
+│   └── lib/
+│       └── md.js               # Bundled lightweight markdown parser
 └── data/
-    ├── names.json          # Curated C&C name lists + syllable bank
-    ├── npc-components.json # Roles, personalities, motivations, stat ranges
+    ├── names.json              # Curated C&C name lists + syllable bank
+    ├── npc-components.json     # Quick NPC building blocks
+    ├── archetypes.json         # Archetype definitions with stat/skill/ability weights
+    ├── motivations.json        # Pre-defined motivation list
+    ├── paths.json              # Pre-defined path list
+    ├── gifts-burdens.json      # Pre-defined gifts and burdens list
+    ├── skills.json             # General and specialized skill definitions
+    ├── abilities.json          # Ability definitions (tied to stats)
     └── rules/
-        ├── quick-ref.md    # Core mechanics quick reference
-        └── full-digest.md  # Full rules digest
+        ├── quick-ref.md        # Core mechanics quick reference
+        └── full-digest.md      # Full rules digest
 ```
 
 ## Architecture
 
 Each JS module exports a single `init(container)` function. `app.js` handles tab switching and calls the appropriate `init()` with a `<div>` container when a tab is activated. Modules are self-contained with no shared state.
 
-JSON data files are fetched once on module init and held in memory for the session. No writes back to JSON — all session state lives in JS variables. Modules share no runtime state; `npc-gen.js` imports the name generation *function* from `name-gen.js` directly (not any session state).
+JSON data files are fetched once on module init and held in memory for the session. No writes back to JSON — all session state lives in JS variables. `npc-gen.js` and `npc-character-gen.js` both import the name generation *function* from `name-gen.js` (not any session state).
 
 ## Features
 
@@ -46,11 +55,79 @@ JSON data files are fetched once on module init and held in memory for the sessi
 
 ### NPC Generator
 
-- Two buttons: "Quick NPC" and "Full NPC".
-- Both use the name generator internally to produce a name.
-- **Quick NPC:** name + role/occupation + personality trait + motivation — all drawn randomly from `npc-components.json`.
-- **Full NPC:** everything in Quick, plus game stats (skills, attributes) drawn from stat ranges in `npc-components.json`.
-- Result displays in a card with a "Copy" button.
+Two modes: **Quick NPC** and **Full NPC**.
+
+#### Quick NPC
+
+One button generates a quick NPC sketch:
+- Name (via name generator)
+- Role/occupation
+- Personality trait
+- Motivation
+
+All fields drawn randomly from `npc-components.json`. Result displays in a card with a "Copy" button.
+
+#### Full NPC (Character Generation)
+
+Generates a mechanically complete NPC by following the C&C character creation pipeline in order. All steps are resolved automatically using archetype-weighted randomization to ensure the result is internally coherent.
+
+**Pipeline steps:**
+
+1. **Motivation** — random pick from `motivations.json`
+
+2. **Archetype** — random pick from `archetypes.json`. The chosen archetype carries a stat priority list, a curated skill pool, and an eligible ability pool that bias all subsequent random choices.
+
+3. **Demographic** — weighted random picks:
+   - Age, Gender, Sexuality each drawn from weighted option tables in `archetypes.json` (e.g., 33% Young, 50% Adult, 17% Elder)
+
+4. **Path** — random pick from `paths.json`
+
+5. **Gifts and Burdens** — each drawn from `gifts-burdens.json`:
+   - Magnitude weighted toward ±1 (most common), with ±2 and ±3 rare; 0 (none) is a valid outcome
+   - Positive values are Gifts, negative values are Burdens
+
+6. **Stats** — 9 stats: Strength, Agility, Endurance, Intelligence, Perception, Wisdom, Spirit, Charisma, Will
+   - 42 points to allocate using the following cost table:
+
+   | Stat value | Point cost |
+   |-----------|------------|
+   | 1         | 0          |
+   | 2         | 3          |
+   | 3         | 6          |
+   | 4         | 10         |
+   | 5         | 15         |
+
+   - Allocation is random but archetype-weighted: the archetype's priority stats receive more points on average. All 9 stats start at 1 (0 cost). Remaining points are distributed randomly with weight skewed toward priority stats until the 42-point budget is spent.
+
+7. **Skills** — 42 points to spend from `skills.json`. Skills have general ranks and optional specialized ranks.
+
+   | General rank | General cost | Specialized rank | Specialized cost |
+   |-------------|-------------|-----------------|-----------------|
+   | 1           | 1           | —               | cannot buy      |
+   | 2           | 3           | 1               | 1               |
+   | 3           | 6           | 2               | 3               |
+   | 4           | 10          | 3               | 6               |
+   | 5           | 15          | 4               | 10              |
+   | 6           | 21          | 5               | 15              |
+
+   - Specialized skill rank must always be higher than the associated general skill rank.
+   - Skills are drawn from the archetype's curated skill pool, weighted so the archetype's primary skills are purchased first. Points are spent greedily until the 42-point budget is exhausted.
+
+8. **Ability** — one ability selected from the archetype's eligible ability pool in `abilities.json`. Abilities are associated with stats; the generator selects from abilities whose stat prerequisites are met by the generated stat block.
+
+9. **Derived stats** — calculated automatically from final stat values:
+
+   | Derived stat     | Formula                              |
+   |-----------------|--------------------------------------|
+   | Initiative       | Agility + Perception + Charisma      |
+   | Physical Defence | Agility + Endurance                  |
+   | Mental Defence   | Perception + Wisdom                  |
+   | Mystical Defence | Charisma + Will                      |
+   | Body             | Strength + Agility + Endurance       |
+   | Mind             | Intelligence + Perception + Wisdom   |
+   | Soul             | Spirit + Charisma + Will             |
+
+Result displays as a full character sheet card with a "Copy" button.
 
 ### Initiative Tracker
 
@@ -63,7 +140,7 @@ JSON data files are fetched once on module init and held in memory for the sessi
 ### Rule Summary
 
 - Two sub-tabs: "Quick Ref" and "Full Digest".
-- Each loads its respective `.md` file from `data/rules/`, renders it as HTML using a bundled lightweight markdown parser (`js/lib/md.js` — a small single-file parser with no CDN dependency), and displays it read-only.
+- Each loads its respective `.md` file from `data/rules/`, renders it as HTML using `js/lib/md.js` (a bundled single-file markdown parser with no CDN dependency), and displays it read-only.
 - Content is maintained by editing the markdown files directly.
 
 ## PWA & Offline
@@ -79,39 +156,83 @@ JSON data files are fetched once on module init and held in memory for the sessi
 - If curated name lists are empty: fall back to procedural generation silently, no user-visible error.
 - No other realistic failure modes in a static local app.
 
-## Data Files
+## Data File Structures
 
-### `names.json` structure
+### `names.json`
 ```json
 {
-  "lists": {
-    "nation-name": ["Name1", "Name2", "..."]
-  },
-  "syllables": {
-    "prefix": ["..."],
-    "middle": ["..."],
-    "suffix": ["..."]
-  }
+  "lists": { "nation-name": ["Name1", "Name2"] },
+  "syllables": { "prefix": [], "middle": [], "suffix": [] }
 }
 ```
 
-### `npc-components.json` structure
+### `npc-components.json` (Quick NPC only)
 ```json
 {
-  "roles": ["..."],
-  "personalities": ["..."],
-  "motivations": ["..."],
-  "stats": {
-    "skills": { "min": 1, "max": 5 },
-    "attributes": { "min": 1, "max": 5 }
-  }
+  "roles": [],
+  "personalities": [],
+  "motivations": []
 }
+```
+
+### `archetypes.json`
+```json
+[
+  {
+    "name": "Warrior",
+    "statPriorities": ["Strength", "Agility", "Endurance"],
+    "skillPool": ["Melee Combat", "Athletics", "Intimidation"],
+    "abilityPool": ["ability-id-1", "ability-id-2"],
+    "demographics": {
+      "age": [
+        { "value": "Young", "weight": 33 },
+        { "value": "Adult", "weight": 50 },
+        { "value": "Elder", "weight": 17 }
+      ],
+      "gender": [],
+      "sexuality": []
+    }
+  }
+]
+```
+
+### `skills.json`
+```json
+[
+  {
+    "name": "Melee Combat",
+    "specialized": ["Swords", "Axes", "Unarmed"]
+  }
+]
+```
+
+### `abilities.json`
+```json
+[
+  {
+    "id": "ability-id-1",
+    "name": "Battle Hardened",
+    "statRequirement": { "Strength": 3 },
+    "description": "..."
+  }
+]
+```
+
+### `gifts-burdens.json`
+```json
+[
+  { "name": "Fleet-Footed", "magnitude": 1, "description": "..." },
+  { "name": "Slow Reflexes", "magnitude": -1, "description": "..." }
+]
 ```
 
 ## Testing
 
 Manual verification:
 1. Load in browser — all four tabs render correctly.
-2. Each feature works as expected with generated data.
-3. Install as PWA from browser.
-4. Disconnect network — verify all features still work offline.
+2. Quick NPC generates a coherent one-card sketch.
+3. Full NPC generates a valid character: stat costs sum to ≤42, skill costs sum to ≤42, specialized ranks exceed general ranks, derived stats match formulas.
+4. Initiative tracker sorts correctly and steps through turns.
+5. Rule Summary renders both sub-tabs from markdown.
+6. Install as PWA from browser.
+7. Disconnect network — verify all features still work offline.
