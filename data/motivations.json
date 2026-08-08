@@ -1,12 +1,16 @@
 [
-  "Protect family",
-  "Seek knowledge",
-  "Gain honor",
-  "Find belonging",
-  "Avenge a wrong",
-  "Restore balance",
-  "Explore the unknown",
-  "Accumulate wealth",
-  "Serve the community",
-  "Survive at any cost"
+  { "name": "Control", "description": "You need to take control of part of your life as small as your own emotions or as grand as the weather itself." },
+  { "name": "Love", "description": "You are driven by the love of a person or thing, or perhaps the desire to be loved. Maybe you are searching for it. Love is at the core of all your important decisions." }, 
+  { "name": "Wealth", "description": "The acquisition of things and money is at the core of your being. In the end, the winner is the one with the most toys." }, 
+  { "name": "Status", "description": "Wealth and power are fine, but you want recognition. You want a title or an office and the praise that comes with it." }, 
+  { "name": "Altruism", "description": "Putting good into the world is the job and the reward. Giving, whether for charity or duty, defines your actions." }, 
+  { "name": "Justice", "description": "You follow an endless trail in an attempt to balance what is wrong in the world. The world is a better place because of the equanimity you strive for." }, 
+  { "name": "Revenge", "description": "How far will you go? What will you do if you get your chance? Your need for retribution wakes you up each morning." }, 
+  { "name": "Responsibility", "description": "Maybe you're taking care of a sick relative or you're on a sacred mission. It may be a burden or the fire in your soul — often it is both." }, 
+  { "name": "Nihilism", "description": "Not only is life meaningless, you need to prove it. Every time the universe lets you down, you feel vindicated in your beliefs." }, 
+  { "name": "Destiny", "description": "You believe in a greater destiny — either for yourself, your tribe or your community. It's your job to help bring it about or thwart it." }, 
+  { "name": "Validation", "description": "You are driven to prove and be recognized that you are either better or worse than others. Maybe you crave validation from a particular group or perhaps everyone." }, 
+  { "name": "Heroism", "description": "You strive to prove your bravery. Maybe just to yourself or to others. Being a hero is about recognition, even if it is just from a single person." }, 
+  { "name": "Protector", "description": "There are people more important than you, and you strive to be between them and danger. You feel your most complete when you sacrifice for others." }, 
+  { "name": "Vanity", "description": "You crave attention, adulation, fans. You're the best at everything, or at least you want people to believe that you are." }
 ]
