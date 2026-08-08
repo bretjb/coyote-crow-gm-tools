@@ -56,5 +56,7 @@ export async function init(container) {
 
   if (sections.length > 0) {
     contentEl.innerHTML = window.marked.parse(sections[0].markdown);
+  } else {
+    contentEl.innerHTML = '<p class="error">No sections found.</p>';
   }
 }

@@ -1,4 +1,4 @@
-# Coyote & Crow — GM Quick Reference (Raw)
+# Coyote & Crow — GM Quick Reference
 
 ## 1. The D12 System — Making a Check
 
@@ -96,7 +96,9 @@ Used when success builds up over an interval, no active opposition (if opposed, 
 - Failure = no progress; Critical Failure = setback/lost progress.
 - **Invention** (new tech/ceremony/etc.): only Critical Successes count, default SN 12, must also be a Long-Term Goal.
 
-## 2. Stats (9 total, scale 1–5 typically; 5 draws attention; 6+ requires Notoriety Gift)
+## 2. Stats
+
+*9 total, scale 1–5 typically; 5 draws attention; 6+ requires Notoriety Gift.*
 
 | Category | Power | Finesse | Reserve |
 |---|---|---|---|
@@ -123,9 +125,9 @@ Used when success builds up over an interval, no active opposition (if opposed, 
 - **Mind** = Intelligence + Perception + Wisdom
 - **Soul** = Spirit + Charisma + Will
 
----
+## 3. Skills
 
-## 3. Skills (27 General Skills; `*` = cannot use at Rank 0)
+*27 General Skills; `*` = cannot use at Rank 0.*
 
 | Skill | Related Stats | One-line summary |
 |---|---|---|
@@ -159,8 +161,6 @@ Used when success builds up over an interval, no active opposition (if opposed, 
 | Unarmed Combat | Strength / Intelligence | Fight bare-handed; Specialized: Martial Arts, Wrestling, Brawling |
 
 **Purchasing (Character creation):** Rank cost — General: 1/3/6/10/15/21 for Ranks 1–6. Specialized: X/1/3/6/10/15 (must exceed connected General Skill's Rank when first taken).
-
----
 
 ## 4. Encounters
 
@@ -229,8 +229,6 @@ Social advantage/disadvantage: minor ±1, major ±2, critical ±3 (e.g. Social S
 - **Objects:** destroyed at 0 Body (Endurance Rank usually sets Body & PD).
 - **Spirits/Gods:** often incorporeal (physical attacks do nothing unless stated) and can planar-travel (~teleport).
 - **The Black:** Spiritual Stats sub for Physical ones (Spirit→Strength, Charisma→Agility, Will→Endurance); all Damage there is Spiritual; no gear carries over.
-
----
 
 ## 5. Damage, States & Healing
 

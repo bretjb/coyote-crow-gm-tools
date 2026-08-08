@@ -1,4 +1,4 @@
-const CACHE = 'cc-gm-v2';
+const CACHE = 'cc-gm-v3';
 
 const ASSETS = [
   './',
@@ -15,6 +15,7 @@ const ASSETS = [
   './js/quick-ref.js',
   './js/full-rules.js',
   './js/lib/md.js',
+  './js/lib/load-marked.js',
   './data/names.json',
   './data/npc-components.json',
   './data/motivations.json',
