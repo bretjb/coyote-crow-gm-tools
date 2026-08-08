@@ -8,6 +8,14 @@ function emptySlots() {
   return slots;
 }
 
+// Clamp a slot value to the valid 1-SLOT_COUNT range. Non-numeric or
+// non-finite input (e.g. NaN, undefined, strings) falls back to `fallback`
+// so callers never index state.slots with an invalid key.
+function clampSlot(value, fallback = 1) {
+  if (!Number.isInteger(value)) return fallback;
+  return Math.min(SLOT_COUNT, Math.max(1, value));
+}
+
 function load() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -17,7 +25,7 @@ function load() {
     for (let i = 1; i <= SLOT_COUNT; i++) {
       if (Array.isArray(parsed.slots?.[i])) slots[i] = parsed.slots[i];
     }
-    const currentStep = Number.isInteger(parsed.currentStep) ? parsed.currentStep : SLOT_COUNT;
+    const currentStep = clampSlot(parsed.currentStep, SLOT_COUNT);
     return { slots, currentStep };
   } catch {
     return { slots: emptySlots(), currentStep: SLOT_COUNT };
@@ -37,11 +45,15 @@ function notify() {
 }
 
 export function getState() {
-  return state;
+  const slots = {};
+  for (let i = 1; i <= SLOT_COUNT; i++) {
+    slots[i] = state.slots[i].map(c => ({ ...c }));
+  }
+  return { slots, currentStep: state.currentStep };
 }
 
 export function addCombatant(name, slot) {
-  const clamped = Math.min(SLOT_COUNT, Math.max(1, slot));
+  const clamped = clampSlot(slot);
   const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   state.slots[clamped].push({ id, name });
   notify();
@@ -55,7 +67,7 @@ export function removeCombatant(id) {
 }
 
 export function moveCombatant(id, newSlot) {
-  const clamped = Math.min(SLOT_COUNT, Math.max(1, newSlot));
+  const clamped = clampSlot(newSlot);
   let found = null;
   for (let i = 1; i <= SLOT_COUNT; i++) {
     const idx = state.slots[i].findIndex(c => c.id === id);
