@@ -1,33 +1,62 @@
 let cachedData = null;
 
+function buildModel(corpus) {
+  const order = 2;
+  const ngrams = {};
+  const beginnings = [];
+
+  for (let j = 0; j < corpus.length; j++) {
+    const txt = corpus[j];
+    for (let i = 0; i <= txt.length - order; i++) {
+      const gram = txt.substring(i, i + order);
+      if (i === 0) {
+        beginnings.push(gram);
+      }
+      if (!ngrams[gram]) {
+        ngrams[gram] = [];
+      }
+      ngrams[gram].push(txt.charAt(i + order));
+    }
+  }
+
+  return { ngrams, beginnings };
+}
+
 export async function loadNameData() {
   if (cachedData) return cachedData;
   const res = await fetch('data/names.json');
   if (!res.ok) throw new Error('offline');
-  cachedData = await res.json();
-  cachedData._used = {};
+  const json = await res.json();
+  const { ngrams, beginnings } = buildModel(json.corpus);
+  cachedData = { corpus: json.corpus, ngrams, beginnings };
   return cachedData;
 }
 
-export function generateName(data) {
-  const keys = Object.keys(data.lists);
-  if (keys.length > 0) {
-    const key = keys[Math.floor(Math.random() * keys.length)];
-    const all = data.lists[key];
-    if (!data._used[key]) data._used[key] = [];
-    const unused = all.filter(n => !data._used[key].includes(n));
-    if (unused.length > 0) {
-      const name = unused[Math.floor(Math.random() * unused.length)];
-      data._used[key].push(name);
-      return name;
-    }
-  }
-  return _procedural(data.syllables);
+function capitalizeWords(str) {
+  return str.replace(/\w\S*/g, txt => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
 }
 
-function _procedural(syl) {
-  const pick = arr => arr.length ? arr[Math.floor(Math.random() * arr.length)] : '';
-  return [pick(syl.prefix), pick(syl.middle), pick(syl.suffix)].join('');
+function randomInRange(min, max) {
+  return Math.floor((Math.random() * (max - min)) + min);
+}
+
+export function generateName(data) {
+  const order = 2;
+  const randomBeginning = Math.floor(Math.random() * data.beginnings.length);
+  let currentGram = data.beginnings[randomBeginning];
+  let newName = currentGram;
+  const randomNumberInRange = randomInRange(4, 12);
+
+  for (let i = 0; i < randomNumberInRange; i++) {
+    const possibilities = data.ngrams[currentGram];
+    const randPossibility = Math.floor(Math.random() * possibilities.length);
+    const next = possibilities[randPossibility];
+    newName += next;
+    const len = newName.length;
+    currentGram = newName.substring(len - order, len);
+  }
+
+  return capitalizeWords(newName);
 }
 
 const history = [];
