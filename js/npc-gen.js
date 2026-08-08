@@ -1,6 +1,7 @@
 import { loadNameData, generateName } from './name-gen.js';
 import { allocateStats, calcDerivedStats, allocateSkills, selectGiftsBurdens, selectAbility } from './npc-character-gen.js';
 import { rollDice, countSuccesses } from './dice.js';
+import { addCombatant } from './initiative-state.js';
 
 async function loadJson(path) {
   const res = await fetch(path);
@@ -111,6 +112,7 @@ function renderQuickCard(npc) {
     <p><strong>Motivation:</strong> ${npc.motivation}</p>
   `;
   appendCopyBtn(card, `${npc.name}\nRole: ${npc.role}\nPersonality: ${npc.personality}\nMotivation: ${npc.motivation}`);
+  appendInitiativeBtn(card, npc.name, null);
   return card;
 }
 
@@ -188,6 +190,7 @@ function renderFullCard(npc, allSkills) {
   });
 
   appendCopyBtn(card, npcToText(npc));
+  appendInitiativeBtn(card, npc.name, Math.min(12, npc.derived.Initiative));
   return card;
 }
 
@@ -260,6 +263,58 @@ function appendCopyBtn(card, text) {
   btn.style.marginTop = '0.5rem';
   btn.addEventListener('click', () => navigator.clipboard.writeText(text));
   card.appendChild(btn);
+}
+
+function appendInitiativeBtn(card, name, suggestedSlot) {
+  const wrap = document.createElement('span');
+  wrap.style.marginLeft = '0.5rem';
+  wrap.style.display = 'inline-flex';
+  wrap.style.alignItems = 'center';
+  wrap.style.gap = '0.3rem';
+
+  const btn = document.createElement('button');
+  btn.textContent = 'Add to Initiative';
+  btn.className = 'secondary';
+  btn.style.marginTop = '0.5rem';
+
+  const input = document.createElement('input');
+  input.type = 'number';
+  input.min = '1';
+  input.max = '12';
+  input.style.width = '4rem';
+  input.style.display = 'none';
+  if (suggestedSlot != null) input.value = String(suggestedSlot);
+
+  const confirmBtn = document.createElement('button');
+  confirmBtn.textContent = 'Confirm';
+  confirmBtn.style.display = 'none';
+  confirmBtn.style.marginTop = '0.5rem';
+
+  const status = document.createElement('span');
+  status.style.color = 'var(--muted)';
+  status.style.fontSize = '0.85rem';
+
+  btn.addEventListener('click', () => {
+    btn.style.display = 'none';
+    input.style.display = '';
+    confirmBtn.style.display = '';
+    input.focus();
+  });
+
+  confirmBtn.addEventListener('click', () => {
+    const slot = parseInt(input.value, 10);
+    if (isNaN(slot) || slot < 1 || slot > 12) return;
+    addCombatant(name, slot);
+    input.style.display = 'none';
+    confirmBtn.style.display = 'none';
+    status.textContent = `Added to Initiative slot ${slot}`;
+  });
+
+  wrap.appendChild(btn);
+  wrap.appendChild(input);
+  wrap.appendChild(confirmBtn);
+  wrap.appendChild(status);
+  card.appendChild(wrap);
 }
 
 function gbLabel(g) {
