@@ -2,9 +2,10 @@ import { init as initNames } from './name-gen.js';
 import { init as initNpcs } from './npc-gen.js';
 import { init as initDice } from './dice-roller.js';
 import { init as initInitiative } from './initiative.js';
-import { init as initRules } from './rules.js';
+import { init as initQuickRef } from './quick-ref.js';
+import { init as initFullRules } from './full-rules.js';
 
-const tabInits = { names: initNames, npcs: initNpcs, dice: initDice, initiative: initInitiative, rules: initRules };
+const tabInits = { names: initNames, npcs: initNpcs, dice: initDice, initiative: initInitiative, quickref: initQuickRef, fullrules: initFullRules };
 const initialized = new Set();
 
 async function activateTab(name) {
