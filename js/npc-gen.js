@@ -190,7 +190,7 @@ function renderFullCard(npc, allSkills) {
   });
 
   appendCopyBtn(card, npcToText(npc));
-  appendInitiativeBtn(card, npc.name, Math.min(12, npc.derived.Initiative));
+  appendInitiativeBtn(card, npc.name, Math.min(12, Math.max(1, npc.derived.Initiative)));
   return card;
 }
 
@@ -303,7 +303,10 @@ function appendInitiativeBtn(card, name, suggestedSlot) {
 
   confirmBtn.addEventListener('click', () => {
     const slot = parseInt(input.value, 10);
-    if (isNaN(slot) || slot < 1 || slot > 12) return;
+    if (isNaN(slot) || slot < 1 || slot > 12) {
+      status.textContent = 'Enter a slot 1-12';
+      return;
+    }
     addCombatant(name, slot);
     input.style.display = 'none';
     confirmBtn.style.display = 'none';

@@ -1,4 +1,4 @@
-const CACHE = 'cc-gm-v3';
+const CACHE = 'cc-gm-v4';
 
 const ASSETS = [
   './',
@@ -11,6 +11,7 @@ const ASSETS = [
   './js/npc-gen.js',
   './js/npc-character-gen.js',
   './js/initiative.js',
+  './js/initiative-state.js',
   './js/dice-roller.js',
   './js/quick-ref.js',
   './js/full-rules.js',
