@@ -6,7 +6,7 @@ export async function init(container) {
     <h2 style="margin-bottom:1rem;">Initiative Tracker</h2>
     <form id="init-form" style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1rem;">
       <input id="init-name" type="text" placeholder="Name" required style="flex:1;min-width:8rem;">
-      <input id="init-slot" type="number" placeholder="Slot" min="1" max="12" required style="width:5rem;">
+      <input id="init-slot" type="number" placeholder="Slot" min="1" max="12" value="1" required style="width:5rem;">
       <button type="submit">Add</button>
     </form>
     <div id="init-slots"></div>
