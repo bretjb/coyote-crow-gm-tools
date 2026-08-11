@@ -122,10 +122,14 @@ export async function init(container) {
       }
     }
 
-    function onUp(upEvent) {
+    function detachListeners() {
       handle.removeEventListener('pointermove', onMove);
       handle.removeEventListener('pointerup', onUp);
-      handle.removeEventListener('pointercancel', onUp);
+      handle.removeEventListener('pointercancel', onCancel);
+    }
+
+    function onUp(upEvent) {
+      detachListeners();
 
       const under = document.elementFromPoint(upEvent.clientX, upEvent.clientY);
       const row = under?.closest('.init-slot-row') ?? null;
@@ -143,9 +147,20 @@ export async function init(container) {
       }
     }
 
+    function onCancel() {
+      // pointercancel fires when the drag is aborted mid-gesture (e.g. a
+      // second finger tapping Next Step / Prev Step / Clear All, which
+      // triggers a render() that removes the captured handle from the DOM).
+      // The pointer's last known coordinates are stale relative to the
+      // freshly-rendered layout, so never commit a move here — just reset.
+      detachListeners();
+      clearDragHighlight();
+      resetChipDragStyles(chip);
+    }
+
     handle.addEventListener('pointermove', onMove);
     handle.addEventListener('pointerup', onUp);
-    handle.addEventListener('pointercancel', onUp);
+    handle.addEventListener('pointercancel', onCancel);
   });
 
   container.querySelector('#init-next').addEventListener('click', () => nextStep());
