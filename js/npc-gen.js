@@ -23,6 +23,13 @@ export async function init(container) {
     <div id="npc-output"></div>
   `;
 
+  const btnQuick = container.querySelector('#btn-quick');
+  const btnFull = container.querySelector('#btn-full');
+  function setActiveMode(mode) {
+    btnQuick.classList.toggle('secondary', mode !== 'quick');
+    btnFull.classList.toggle('secondary', mode !== 'full');
+  }
+
   let nameData, components, motivations, paths, giftsAndBurdens, allSkills, abilities, archetypes;
   try {
     [nameData, components, motivations, paths, giftsAndBurdens, allSkills, abilities, archetypes] = await Promise.all([
@@ -42,7 +49,8 @@ export async function init(container) {
 
   const output = container.querySelector('#npc-output');
 
-  container.querySelector('#btn-quick').addEventListener('click', () => {
+  btnQuick.addEventListener('click', () => {
+    setActiveMode('quick');
     const npc = {
       name: generateName(nameData),
       role: pick(components.roles),
@@ -53,7 +61,8 @@ export async function init(container) {
     output.appendChild(renderQuickCard(npc));
   });
 
-  container.querySelector('#btn-full').addEventListener('click', () => {
+  btnFull.addEventListener('click', () => {
+    setActiveMode('full');
     const archetype = archetypes[Math.floor(Math.random() * archetypes.length)];
     const npc = generateFullNpc({ nameData, motivations, paths, giftsAndBurdens, allSkills, abilities, archetype });
     output.innerHTML = '';
