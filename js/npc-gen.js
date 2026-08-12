@@ -2,7 +2,7 @@ import { loadNameData, generateName } from './name-gen.js';
 import { allocateStats, calcDerivedStats, allocateSkills, selectGiftsBurdens, selectAbility } from './npc-character-gen.js';
 import { rollDice, countSuccesses } from './dice.js';
 import { addCombatant } from './initiative-state.js';
-import { saveNpc, updateNpc } from './npc-storage.js';
+import { saveNpc, updateNpc, getAll, removeNpc, undoRemove, subscribe } from './npc-storage.js';
 
 async function loadJson(path) {
   const res = await fetch(path);
@@ -22,6 +22,16 @@ export async function init(container) {
       <button id="btn-full" class="secondary">Full NPC</button>
     </div>
     <div id="npc-output"></div>
+
+    <div class="card" style="margin-top:1.5rem;">
+      <h3 style="margin-bottom:0.5rem;">Saved NPCs</h3>
+      <div style="display:flex;gap:0.5rem;margin-bottom:0.75rem;">
+        <button id="npc-export-all" class="secondary">Export All</button>
+        <button id="npc-import" class="secondary">Import</button>
+        <input id="npc-import-file" type="file" accept="application/json" style="display:none;">
+      </div>
+      <div id="npc-saved-list"></div>
+    </div>
   `;
 
   const btnQuick = container.querySelector('#btn-quick');
@@ -49,6 +59,9 @@ export async function init(container) {
   }
 
   const output = container.querySelector('#npc-output');
+  const savedListEl = container.querySelector('#npc-saved-list');
+  renderSavedList(savedListEl, output, allSkills);
+  subscribe(() => renderSavedList(savedListEl, output, allSkills));
 
   btnQuick.addEventListener('click', () => {
     setActiveMode('quick');
@@ -378,6 +391,57 @@ function appendInitiativeBtn(card, name, suggestedSlot) {
   wrap.appendChild(confirmBtn);
   wrap.appendChild(status);
   card.appendChild(wrap);
+}
+
+function renderSavedList(listEl, output, allSkills) {
+  const entries = getAll();
+  listEl.innerHTML = '';
+  if (entries.length === 0) {
+    listEl.innerHTML = '<p style="color:var(--muted);font-size:0.85rem;">No saved NPCs yet.</p>';
+    return;
+  }
+  entries.forEach(entry => {
+    const row = document.createElement('div');
+    row.style.display = 'flex';
+    row.style.alignItems = 'center';
+    row.style.gap = '0.5rem';
+    row.style.padding = '0.25rem 0';
+
+    if (entry.deleted) {
+      row.style.opacity = '0.6';
+      const span = document.createElement('span');
+      span.textContent = `Deleted — ${entry.data.name}`;
+      span.style.flex = '1';
+      const undoBtn = document.createElement('button');
+      undoBtn.textContent = 'Undo';
+      undoBtn.className = 'secondary';
+      undoBtn.addEventListener('click', () => undoRemove(entry.id));
+      row.appendChild(span);
+      row.appendChild(undoBtn);
+    } else {
+      const nameBtn = document.createElement('button');
+      nameBtn.textContent = entry.data.name;
+      nameBtn.className = 'secondary';
+      nameBtn.style.flex = '1';
+      nameBtn.style.textAlign = 'left';
+      nameBtn.addEventListener('click', () => {
+        output.innerHTML = '';
+        const card = entry.kind === 'full'
+          ? renderFullCard(entry.data, allSkills, { id: entry.id, note: entry.note })
+          : renderQuickCard(entry.data, { id: entry.id, note: entry.note });
+        output.appendChild(card);
+      });
+
+      const removeBtn = document.createElement('button');
+      removeBtn.textContent = '×';
+      removeBtn.className = 'secondary';
+      removeBtn.addEventListener('click', () => removeNpc(entry.id));
+
+      row.appendChild(nameBtn);
+      row.appendChild(removeBtn);
+    }
+    listEl.appendChild(row);
+  });
 }
 
 function gbLabel(g) {
