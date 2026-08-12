@@ -2,6 +2,7 @@ import { loadNameData, generateName } from './name-gen.js';
 import { allocateStats, calcDerivedStats, allocateSkills, selectGiftsBurdens, selectAbility } from './npc-character-gen.js';
 import { rollDice, countSuccesses } from './dice.js';
 import { addCombatant } from './initiative-state.js';
+import { saveNpc, updateNpc } from './npc-storage.js';
 
 async function loadJson(path) {
   const res = await fetch(path);
@@ -111,7 +112,7 @@ function weightedPickDemographic(options) {
   return options[options.length - 1].value;
 }
 
-function renderQuickCard(npc) {
+function renderQuickCard(npc, savedEntry) {
   const card = document.createElement('div');
   card.className = 'card';
   card.innerHTML = `
@@ -122,10 +123,11 @@ function renderQuickCard(npc) {
   `;
   appendCopyBtn(card, `${npc.name}\nRole: ${npc.role}\nPersonality: ${npc.personality}\nMotivation: ${npc.motivation}`);
   appendInitiativeBtn(card, npc.name, null);
+  appendSaveControls(card, 'quick', npc, savedEntry);
   return card;
 }
 
-function renderFullCard(npc, allSkills) {
+function renderFullCard(npc, allSkills, savedEntry) {
   const card = document.createElement('div');
   card.className = 'card';
 
@@ -200,6 +202,7 @@ function renderFullCard(npc, allSkills) {
 
   appendCopyBtn(card, npcToText(npc));
   appendInitiativeBtn(card, npc.name, Math.min(12, Math.max(1, npc.derived.Initiative)));
+  appendSaveControls(card, 'full', npc, savedEntry);
   return card;
 }
 
@@ -263,6 +266,54 @@ function buildSpecTable(allSkills, stats, specEntries) {
 
   table.appendChild(tbody);
   return table;
+}
+
+function appendSaveControls(card, kind, npc, savedEntry) {
+  const wrap = document.createElement('div');
+  wrap.style.marginTop = '0.75rem';
+
+  const label = document.createElement('label');
+  label.textContent = 'Notes';
+  label.style.display = 'block';
+  label.style.color = 'var(--muted)';
+  label.style.fontSize = '0.8rem';
+  label.style.marginBottom = '0.25rem';
+
+  const textarea = document.createElement('textarea');
+  textarea.rows = 3;
+  textarea.style.width = '100%';
+  textarea.style.resize = 'vertical';
+  textarea.value = savedEntry ? savedEntry.note : '';
+
+  const saveBtn = document.createElement('button');
+  saveBtn.className = 'secondary';
+  saveBtn.style.marginTop = '0.5rem';
+
+  let savedId = savedEntry ? savedEntry.id : null;
+  saveBtn.textContent = savedId ? 'Saved ✓' : 'Save';
+
+  let debounceTimer;
+  textarea.addEventListener('input', () => {
+    if (!savedId) return;
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      updateNpc(savedId, { note: textarea.value });
+    }, 500);
+  });
+
+  saveBtn.addEventListener('click', () => {
+    if (savedId) {
+      updateNpc(savedId, { data: npc, note: textarea.value });
+    } else {
+      savedId = saveNpc({ kind, data: npc, note: textarea.value });
+      saveBtn.textContent = 'Saved ✓';
+    }
+  });
+
+  wrap.appendChild(label);
+  wrap.appendChild(textarea);
+  wrap.appendChild(saveBtn);
+  card.appendChild(wrap);
 }
 
 function appendCopyBtn(card, text) {
