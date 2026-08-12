@@ -84,6 +84,7 @@ export function importMerge(jsonString) {
     const { kind, data } = item;
     const note = item.note || '';
     if (kind !== 'quick' && kind !== 'full') continue;
+    if (!data || typeof data !== 'object' || typeof data.name !== 'string') continue;
     const isDuplicate = state.npcs.some(n =>
       !n.deleted &&
       n.kind === kind &&

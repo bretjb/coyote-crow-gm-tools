@@ -14,6 +14,12 @@ function pick(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
+function esc(s) {
+  const div = document.createElement('div');
+  div.textContent = String(s);
+  return div.innerHTML;
+}
+
 export async function init(container) {
   container.innerHTML = `
     <h2 style="margin-bottom:1rem;">NPC Generator</h2>
@@ -29,6 +35,7 @@ export async function init(container) {
         <button id="npc-export-all" class="secondary">Export All</button>
         <button id="npc-import" class="secondary">Import</button>
         <input id="npc-import-file" type="file" accept="application/json" style="display:none;">
+        <span id="npc-import-status" style="color:var(--muted);font-size:0.85rem;"></span>
       </div>
       <div id="npc-saved-list"></div>
     </div>
@@ -75,13 +82,22 @@ export async function init(container) {
   });
 
   const importInput = container.querySelector('#npc-import-file');
+  const importStatus = container.querySelector('#npc-import-status');
   container.querySelector('#npc-import').addEventListener('click', () => importInput.click());
   importInput.addEventListener('change', async () => {
     const file = importInput.files[0];
     if (!file) return;
-    const text = await file.text();
-    importMerge(text);
-    importInput.value = '';
+    try {
+      const text = await file.text();
+      const added = importMerge(text);
+      importStatus.textContent = added > 0
+        ? `Imported ${added} new NPC(s)`
+        : 'No new NPCs (all duplicates or invalid file)';
+    } catch {
+      importStatus.textContent = 'Import failed — could not read file';
+    } finally {
+      importInput.value = '';
+    }
   });
 
   btnQuick.addEventListener('click', () => {
@@ -150,10 +166,10 @@ function renderQuickCard(npc, savedEntry) {
   const card = document.createElement('div');
   card.className = 'card';
   card.innerHTML = `
-    <h2>${npc.name}</h2>
-    <p><strong>Role:</strong> ${npc.role}</p>
-    <p><strong>Personality:</strong> ${npc.personality}</p>
-    <p><strong>Motivation:</strong> ${npc.motivation}</p>
+    <h2>${esc(npc.name)}</h2>
+    <p><strong>Role:</strong> ${esc(npc.role)}</p>
+    <p><strong>Personality:</strong> ${esc(npc.personality)}</p>
+    <p><strong>Motivation:</strong> ${esc(npc.motivation)}</p>
   `;
   appendCopyBtn(card, `${npc.name}\nRole: ${npc.role}\nPersonality: ${npc.personality}\nMotivation: ${npc.motivation}`);
   appendInitiativeBtn(card, npc.name, null);
@@ -170,18 +186,18 @@ function renderFullCard(npc, allSkills, savedEntry) {
     : 'None';
 
   card.innerHTML = `
-    <h2>${npc.name}</h2>
-    <p style="color:var(--muted);margin-bottom:0.25rem;">${npc.archetype} · ${npc.age} · ${npc.gender} · ${npc.sexuality}</p>
-    <p style="color:var(--muted);font-size:0.8rem;margin-bottom:0.75rem;">+1 ${npc.archetypeStatBonus} · free rank: ${npc.freeSkill}</p>
-    <p><strong>Motivation:</strong> ${npc.motivation.name}</p>
-    <p><strong>Path:</strong> ${npc.path.name} <span style="color:var(--muted);font-size:0.85rem;">(+1 ${npc.path.statBonuses.join(', +1 ')})</span></p>
-    <p style="margin-bottom:0.75rem;"><strong>Gifts/Burdens:</strong> ${gb}</p>
+    <h2>${esc(npc.name)}</h2>
+    <p style="color:var(--muted);margin-bottom:0.25rem;">${esc(npc.archetype)} · ${esc(npc.age)} · ${esc(npc.gender)} · ${esc(npc.sexuality)}</p>
+    <p style="color:var(--muted);font-size:0.8rem;margin-bottom:0.75rem;">+1 ${esc(npc.archetypeStatBonus)} · free rank: ${esc(npc.freeSkill)}</p>
+    <p><strong>Motivation:</strong> ${esc(npc.motivation.name)}</p>
+    <p><strong>Path:</strong> ${esc(npc.path.name)} <span style="color:var(--muted);font-size:0.85rem;">(+1 ${esc(npc.path.statBonuses.join(', +1 '))})</span></p>
+    <p style="margin-bottom:0.75rem;"><strong>Gifts/Burdens:</strong> ${esc(gb)}</p>
 
     <h3 style="margin-bottom:0.5rem;">Stats</h3>
     <div class="stat-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.4rem;margin-bottom:0.75rem;">
       ${Object.entries(npc.stats).map(([k, v]) => `
         <div style="background:var(--bg);padding:0.3rem 0.5rem;border-radius:3px;border:1px solid var(--border);">
-          <span style="color:var(--muted);font-size:0.75rem;">${k}</span><br>
+          <span style="color:var(--muted);font-size:0.75rem;">${esc(k)}</span><br>
           <span style="font-size:1.1rem;color:var(--accent);">${v}</span>
         </div>`).join('')}
     </div>
@@ -189,7 +205,7 @@ function renderFullCard(npc, allSkills, savedEntry) {
     <h3 style="margin-bottom:0.5rem;">Derived</h3>
     <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:0.3rem;margin-bottom:0.75rem;font-size:0.85rem;">
       ${Object.entries(npc.derived).map(([k, v]) => `
-        <div><span style="color:var(--muted);">${k}:</span> <strong>${v}</strong></div>`).join('')}
+        <div><span style="color:var(--muted);">${esc(k)}:</span> <strong>${v}</strong></div>`).join('')}
     </div>
 
     <h3 style="margin:0.75rem 0 0.35rem;">General Skills <span style="color:var(--muted);font-size:0.75rem;font-weight:normal;">(click to roll)</span></h3>
@@ -198,8 +214,8 @@ function renderFullCard(npc, allSkills, savedEntry) {
     <div id="skill-roll-result" style="min-height:1.5rem;margin-bottom:0.75rem;"></div>
 
     <h3 style="margin-bottom:0.25rem;">Ability</h3>
-    <p style="margin-bottom:0.75rem;"><strong>${npc.ability.name}</strong> — ${npc.ability.description}
-      <span style="color:var(--muted);font-size:0.8rem;">[${npc.ability.diceCheck.join(' + ')}]</span>
+    <p style="margin-bottom:0.75rem;"><strong>${esc(npc.ability.name)}</strong> — ${esc(npc.ability.description)}
+      <span style="color:var(--muted);font-size:0.8rem;">[${esc(npc.ability.diceCheck.join(' + '))}]</span>
     </p>
   `;
 
@@ -231,7 +247,7 @@ function renderFullCard(npc, allSkills, savedEntry) {
     const results = rollDice(pool);
     const successes = countSuccesses(results, 8);
     const faces = results.map(r => `<span class="die${r >= 8 ? ' success' : ''}">${r}</span>`).join('');
-    rollResult.innerHTML = `<strong>${label}</strong> (${pool} dice): ${faces} — <strong>${successes} success${successes !== 1 ? 'es' : ''}</strong>`;
+    rollResult.innerHTML = `<strong>${esc(label)}</strong> (${pool} dice): ${faces} — <strong>${successes} success${successes !== 1 ? 'es' : ''}</strong>`;
   });
 
   appendCopyBtn(card, npcToText(npc));
@@ -294,7 +310,7 @@ function buildSpecTable(allSkills, stats, specEntries) {
     const tr = document.createElement('tr');
     tr.dataset.pool = pool;
     tr.dataset.skillName = `${name} (${generalName})`;
-    tr.innerHTML = `<td>${name} <span style="color:var(--muted);font-size:0.8rem;">${generalName}</span></td><td>${higherName} ${higher}</td><td>${rank}</td><td>${pool}</td>`;
+    tr.innerHTML = `<td>${esc(name)} <span style="color:var(--muted);font-size:0.8rem;">${esc(generalName)}</span></td><td>${higherName} ${higher}</td><td>${rank}</td><td>${pool}</td>`;
     tbody.appendChild(tr);
   }
 
@@ -431,7 +447,7 @@ function renderSavedList(listEl, output, allSkills) {
     if (entry.deleted) {
       row.style.opacity = '0.6';
       const span = document.createElement('span');
-      span.textContent = `Deleted — ${entry.data.name}`;
+      span.textContent = `Deleted — ${entry.data?.name || '(unnamed)'}`;
       span.style.flex = '1';
       const undoBtn = document.createElement('button');
       undoBtn.textContent = 'Undo';
@@ -441,7 +457,7 @@ function renderSavedList(listEl, output, allSkills) {
       row.appendChild(undoBtn);
     } else {
       const nameBtn = document.createElement('button');
-      nameBtn.textContent = entry.data.name;
+      nameBtn.textContent = entry.data?.name || '(unnamed)';
       nameBtn.className = 'secondary';
       nameBtn.style.flex = '1';
       nameBtn.style.textAlign = 'left';

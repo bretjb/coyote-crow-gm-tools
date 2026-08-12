@@ -69,7 +69,7 @@ button.secondary {
   border: 1px solid var(--border);
 }
 
-input, select {
+input, select, textarea {
   background: var(--surface);
   color: var(--text);
   border: 1px solid var(--border);
