@@ -198,14 +198,14 @@ function renderFullCard(npc, allSkills, savedEntry) {
       ${Object.entries(npc.stats).map(([k, v]) => `
         <div style="background:var(--bg);padding:0.3rem 0.5rem;border-radius:3px;border:1px solid var(--border);">
           <span style="color:var(--muted);font-size:0.75rem;">${esc(k)}</span><br>
-          <span style="font-size:1.1rem;color:var(--accent);">${v}</span>
+          <span style="font-size:1.1rem;color:var(--accent);">${esc(v)}</span>
         </div>`).join('')}
     </div>
 
     <h3 style="margin-bottom:0.5rem;">Derived</h3>
     <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:0.3rem;margin-bottom:0.75rem;font-size:0.85rem;">
       ${Object.entries(npc.derived).map(([k, v]) => `
-        <div><span style="color:var(--muted);">${esc(k)}:</span> <strong>${v}</strong></div>`).join('')}
+        <div><span style="color:var(--muted);">${esc(k)}:</span> <strong>${esc(v)}</strong></div>`).join('')}
     </div>
 
     <h3 style="margin:0.75rem 0 0.35rem;">General Skills <span style="color:var(--muted);font-size:0.75rem;font-weight:normal;">(click to roll)</span></h3>
