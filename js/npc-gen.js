@@ -2,7 +2,7 @@ import { loadNameData, generateName } from './name-gen.js';
 import { allocateStats, calcDerivedStats, allocateSkills, selectGiftsBurdens, selectAbility } from './npc-character-gen.js';
 import { rollDice, countSuccesses } from './dice.js';
 import { addCombatant } from './initiative-state.js';
-import { saveNpc, updateNpc, getAll, removeNpc, undoRemove, subscribe } from './npc-storage.js';
+import { saveNpc, updateNpc, getAll, removeNpc, undoRemove, subscribe, exportAll, importMerge } from './npc-storage.js';
 
 async function loadJson(path) {
   const res = await fetch(path);
@@ -62,6 +62,27 @@ export async function init(container) {
   const savedListEl = container.querySelector('#npc-saved-list');
   renderSavedList(savedListEl, output, allSkills);
   subscribe(() => renderSavedList(savedListEl, output, allSkills));
+
+  container.querySelector('#npc-export-all').addEventListener('click', () => {
+    const json = exportAll();
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `npc-library-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  const importInput = container.querySelector('#npc-import-file');
+  container.querySelector('#npc-import').addEventListener('click', () => importInput.click());
+  importInput.addEventListener('change', async () => {
+    const file = importInput.files[0];
+    if (!file) return;
+    const text = await file.text();
+    importMerge(text);
+    importInput.value = '';
+  });
 
   btnQuick.addEventListener('click', () => {
     setActiveMode('quick');
