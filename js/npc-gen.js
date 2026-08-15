@@ -182,6 +182,32 @@ function swapPath(npc, newPath) {
   recalcDerivedAndSyncCurrent(npc);
 }
 
+function swapArchetype(npc, newArchetype) {
+  npc.stats[npc.archetypeStatBonus] = clampStat(npc.stats[npc.archetypeStatBonus] - 1);
+  npc.archetypeStatBonus = newArchetype.statBonus;
+  npc.stats[npc.archetypeStatBonus] = clampStat(npc.stats[npc.archetypeStatBonus] + 1);
+
+  const oldFreeSkill = npc.freeSkill;
+  const oldEntry = npc.skills[oldFreeSkill];
+  if (oldEntry) {
+    oldEntry.general = clampSkillRank(oldEntry.general - 1);
+    if (oldEntry.general === 0 && !oldEntry.specialized) {
+      delete npc.skills[oldFreeSkill];
+    }
+  }
+
+  const newFreeSkill = pick(newArchetype.freeSkillOptions);
+  if (!npc.skills[newFreeSkill]) {
+    npc.skills[newFreeSkill] = { general: 1 };
+  } else {
+    npc.skills[newFreeSkill].general = clampSkillRank(npc.skills[newFreeSkill].general + 1);
+  }
+  npc.freeSkill = newFreeSkill;
+  npc.archetype = newArchetype.name;
+
+  recalcDerivedAndSyncCurrent(npc);
+}
+
 function recalcDerivedAndSyncCurrent(npc) {
   const prevDerived = npc.derived;
   const prevCurrent = npc.current;
@@ -306,7 +332,6 @@ function renderFullCard(npc, ctx, savedEntry) {
     <div id="name-section" class="row-flex-wrap mb-0-5"></div>
     <p class="npc-meta" id="archetype-label"></p>
     <div id="demographics-section" class="row-flex-wrap mb-0-5"></div>
-    <p class="npc-meta-sm">+1 ${esc(npc.archetypeStatBonus)} · free rank: ${esc(npc.freeSkill)}</p>
     <div id="motivation-section" class="mb-0-75"></div>
     <div id="path-section" class="mb-0-5"></div>
     <p class="mb-0-75"><strong>Gifts/Burdens:</strong> ${esc(gb)}</p>
@@ -342,7 +367,34 @@ function renderFullCard(npc, ctx, savedEntry) {
   nameSectionEl.appendChild(nameInput);
   nameSectionEl.appendChild(regenBtn);
 
-  card.querySelector('#archetype-label').textContent = npc.archetype;
+  const archetypeLabelEl = card.querySelector('#archetype-label');
+  const archetypeSelect = document.createElement('select');
+  for (const a of ctx.archetypes) {
+    const o = document.createElement('option');
+    o.value = a.name;
+    o.textContent = a.name;
+    archetypeSelect.appendChild(o);
+  }
+  archetypeSelect.value = npc.archetype;
+  archetypeLabelEl.replaceWith(archetypeSelect);
+
+  const archetypeNote = document.createElement('p');
+  archetypeNote.className = 'npc-meta-sm';
+  archetypeSelect.insertAdjacentElement('afterend', archetypeNote);
+  function refreshArchetypeNote() {
+    archetypeNote.textContent = `+1 ${npc.archetypeStatBonus} · free rank: ${npc.freeSkill}`;
+  }
+  refreshArchetypeNote();
+
+  archetypeSelect.addEventListener('change', () => {
+    const newArchetype = ctx.archetypes.find(a => a.name === archetypeSelect.value);
+    swapArchetype(npc, newArchetype);
+    refreshArchetypeNote();
+    ageField.setOptions(archetypeDemographics('age'), npc.age);
+    genderField.setOptions(archetypeDemographics('gender'), npc.gender);
+    sexualityField.setOptions(archetypeDemographics('sexuality'), npc.sexuality);
+    rebuildBody();
+  });
 
   function archetypeDemographics(key) {
     const def = ctx.archetypes.find(a => a.name === npc.archetype);
