@@ -171,6 +171,17 @@ function ensureCurrent(npc) {
   }
 }
 
+function swapPath(npc, newPath) {
+  for (const stat of npc.path.statBonuses) {
+    npc.stats[stat] = clampStat(npc.stats[stat] - 1);
+  }
+  for (const stat of newPath.statBonuses) {
+    npc.stats[stat] = clampStat(npc.stats[stat] + 1);
+  }
+  npc.path = { name: newPath.name, statBonuses: [...newPath.statBonuses] };
+  recalcDerivedAndSyncCurrent(npc);
+}
+
 function recalcDerivedAndSyncCurrent(npc) {
   const prevDerived = npc.derived;
   const prevCurrent = npc.current;
@@ -297,7 +308,7 @@ function renderFullCard(npc, ctx, savedEntry) {
     <div id="demographics-section" class="row-flex-wrap mb-0-5"></div>
     <p class="npc-meta-sm">+1 ${esc(npc.archetypeStatBonus)} · free rank: ${esc(npc.freeSkill)}</p>
     <div id="motivation-section" class="mb-0-75"></div>
-    <p><strong>Path:</strong> ${esc(npc.path.name)} <span class="text-muted-sm">(+1 ${esc(npc.path.statBonuses.join(', +1 '))})</span></p>
+    <div id="path-section" class="mb-0-5"></div>
     <p class="mb-0-75"><strong>Gifts/Burdens:</strong> ${esc(gb)}</p>
 
     <h3 class="mb-0-5">Stats</h3>
@@ -387,6 +398,67 @@ function renderFullCard(npc, ctx, savedEntry) {
     skillSectionEl.appendChild(buildSkillSection(npc, ctx.allSkills, rebuildBody));
   }
   rebuildBody();
+
+  const pathSectionEl = card.querySelector('#path-section');
+  const pathRow = document.createElement('div');
+  pathRow.className = 'row-flex-wrap';
+  const pathLabel = document.createElement('label');
+  pathLabel.textContent = 'Path';
+  pathLabel.className = 'field-label';
+  const pathSelect = document.createElement('select');
+  for (const p of ctx.paths) {
+    const o = document.createElement('option');
+    o.value = p.name;
+    o.textContent = p.name;
+    pathSelect.appendChild(o);
+  }
+  const pathCustomOpt = document.createElement('option');
+  pathCustomOpt.value = '__custom__';
+  pathCustomOpt.textContent = 'Custom...';
+  pathSelect.appendChild(pathCustomOpt);
+
+  const pathCustomInput = document.createElement('input');
+  pathCustomInput.type = 'text';
+  pathCustomInput.className = 'hidden mt-0-5';
+
+  const pathNote = document.createElement('p');
+  pathNote.className = 'text-muted-sm';
+  function refreshPathNote() {
+    pathNote.textContent = npc.path.statBonuses.length ? `(+1 ${npc.path.statBonuses.join(', +1 ')})` : '';
+  }
+
+  if (ctx.paths.some(p => p.name === npc.path.name)) {
+    pathSelect.value = npc.path.name;
+  } else {
+    pathSelect.value = '__custom__';
+    pathCustomInput.value = npc.path.name;
+    pathCustomInput.classList.remove('hidden');
+  }
+  refreshPathNote();
+
+  pathSelect.addEventListener('change', () => {
+    if (pathSelect.value === '__custom__') {
+      pathCustomInput.classList.remove('hidden');
+      pathCustomInput.value = '';
+      pathCustomInput.focus();
+      swapPath(npc, { name: '', statBonuses: [] });
+    } else {
+      pathCustomInput.classList.add('hidden');
+      swapPath(npc, ctx.paths.find(p => p.name === pathSelect.value));
+    }
+    refreshPathNote();
+    rebuildBody();
+  });
+
+  pathCustomInput.addEventListener('change', () => {
+    npc.path.name = pathCustomInput.value.trim();
+  });
+
+  pathRow.appendChild(pathLabel);
+  pathRow.appendChild(pathSelect);
+  pathSectionEl.appendChild(pathRow);
+  pathSectionEl.appendChild(pathCustomInput);
+  pathSectionEl.appendChild(pathNote);
 
   card.addEventListener('click', e => {
     const row = e.target.closest('tr[data-pool]');
