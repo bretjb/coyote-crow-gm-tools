@@ -293,7 +293,8 @@ function renderFullCard(npc, ctx, savedEntry) {
 
   card.innerHTML = `
     <div id="name-section" class="row-flex-wrap mb-0-5"></div>
-    <p class="npc-meta">${esc(npc.archetype)} · ${esc(npc.age)} · ${esc(npc.gender)} · ${esc(npc.sexuality)}</p>
+    <p class="npc-meta" id="archetype-label"></p>
+    <div id="demographics-section" class="row-flex-wrap mb-0-5"></div>
     <p class="npc-meta-sm">+1 ${esc(npc.archetypeStatBonus)} · free rank: ${esc(npc.freeSkill)}</p>
     <div id="motivation-section" class="mb-0-75"></div>
     <p><strong>Path:</strong> ${esc(npc.path.name)} <span class="text-muted-sm">(+1 ${esc(npc.path.statBonuses.join(', +1 '))})</span></p>
@@ -329,6 +330,31 @@ function renderFullCard(npc, ctx, savedEntry) {
   });
   nameSectionEl.appendChild(nameInput);
   nameSectionEl.appendChild(regenBtn);
+
+  card.querySelector('#archetype-label').textContent = npc.archetype;
+
+  function archetypeDemographics(key) {
+    const def = ctx.archetypes.find(a => a.name === npc.archetype);
+    const list = def ? def.demographics[key].map(o => o.value) : [];
+    return [...new Set(list)];
+  }
+
+  const demoSectionEl = card.querySelector('#demographics-section');
+  const ageField = buildSelectCustomField({
+    label: 'Age', value: npc.age, options: archetypeDemographics('age'),
+    onChange: v => { npc.age = v; },
+  });
+  const genderField = buildSelectCustomField({
+    label: 'Gender', value: npc.gender, options: archetypeDemographics('gender'),
+    onChange: v => { npc.gender = v; },
+  });
+  const sexualityField = buildSelectCustomField({
+    label: 'Sexuality', value: npc.sexuality, options: archetypeDemographics('sexuality'),
+    onChange: v => { npc.sexuality = v; },
+  });
+  demoSectionEl.appendChild(ageField.el);
+  demoSectionEl.appendChild(genderField.el);
+  demoSectionEl.appendChild(sexualityField.el);
 
   card.querySelector('#motivation-section').appendChild(
     buildNamedDescField({
@@ -377,6 +403,67 @@ function renderFullCard(npc, ctx, savedEntry) {
   appendInitiativeBtn(card, () => npc.name, Math.min(12, Math.max(1, npc.derived.Initiative)));
   appendSaveControls(card, 'full', npc, savedEntry);
   return card;
+}
+
+function buildSelectCustomField({ label, value, options, onChange }) {
+  const el = document.createElement('div');
+  el.className = 'row-flex-wrap mb-0-5';
+
+  const labelEl = document.createElement('label');
+  labelEl.textContent = label;
+  labelEl.className = 'field-label';
+
+  const select = document.createElement('select');
+  const customInput = document.createElement('input');
+  customInput.type = 'text';
+  customInput.className = 'hidden mt-0-5';
+
+  function populate(opts, currentValue) {
+    select.innerHTML = '';
+    for (const opt of opts) {
+      const o = document.createElement('option');
+      o.value = opt;
+      o.textContent = opt;
+      select.appendChild(o);
+    }
+    const customOpt = document.createElement('option');
+    customOpt.value = '__custom__';
+    customOpt.textContent = 'Custom...';
+    select.appendChild(customOpt);
+
+    if (opts.includes(currentValue)) {
+      select.value = currentValue;
+      customInput.classList.add('hidden');
+    } else {
+      select.value = '__custom__';
+      customInput.value = currentValue;
+      customInput.classList.remove('hidden');
+    }
+  }
+
+  populate(options, value);
+
+  select.addEventListener('change', () => {
+    if (select.value === '__custom__') {
+      customInput.classList.remove('hidden');
+      customInput.value = '';
+      customInput.focus();
+      onChange('');
+    } else {
+      customInput.classList.add('hidden');
+      onChange(select.value);
+    }
+  });
+
+  customInput.addEventListener('change', () => {
+    onChange(customInput.value.trim());
+  });
+
+  el.appendChild(labelEl);
+  el.appendChild(select);
+  el.appendChild(customInput);
+
+  return { el, setOptions: (opts, currentValue) => populate(opts, currentValue) };
 }
 
 function buildNamedDescField({ label, current, options, onChange, customShape, formatExtra }) {
