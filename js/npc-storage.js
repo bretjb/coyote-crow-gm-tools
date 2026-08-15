@@ -33,12 +33,12 @@ function generateId() {
 }
 
 export function getAll() {
-  return state.npcs.map(n => ({ ...n }));
+  return state.npcs.map(n => ({ ...n, data: JSON.parse(JSON.stringify(n.data)) }));
 }
 
 export function saveNpc({ kind, data, note }) {
   const id = generateId();
-  state.npcs.push({ id, kind, data, note: note || '', savedAt: Date.now(), deleted: false });
+  state.npcs.push({ id, kind, data: JSON.parse(JSON.stringify(data)), note: note || '', savedAt: Date.now(), deleted: false });
   notify();
   return id;
 }
@@ -46,7 +46,7 @@ export function saveNpc({ kind, data, note }) {
 export function updateNpc(id, { data, note } = {}) {
   const entry = state.npcs.find(n => n.id === id);
   if (!entry) return;
-  if (data !== undefined) entry.data = data;
+  if (data !== undefined) entry.data = JSON.parse(JSON.stringify(data));
   if (note !== undefined) entry.note = note;
   notify();
 }

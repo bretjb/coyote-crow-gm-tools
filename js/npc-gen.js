@@ -448,6 +448,7 @@ function renderFullCard(npc, ctx, savedEntry) {
     statSectionEl.appendChild(buildStatSection(npc, rebuildBody));
     skillSectionEl.innerHTML = '';
     skillSectionEl.appendChild(buildSkillSection(npc, ctx.allSkills, rebuildBody));
+    rollResult.innerHTML = '';
   }
   rebuildBody();
 
@@ -524,7 +525,7 @@ function renderFullCard(npc, ctx, savedEntry) {
   });
 
   appendCopyBtn(card, () => npcToText(npc));
-  appendInitiativeBtn(card, () => npc.name, Math.min(12, Math.max(1, npc.derived.Initiative)));
+  appendInitiativeBtn(card, () => npc.name, () => Math.min(12, Math.max(1, npc.derived.Initiative)));
   appendSaveControls(card, 'full', npc, savedEntry);
   return card;
 }
@@ -657,13 +658,6 @@ function buildNamedDescField({ label, current, options, onChange, customShape, f
   el.appendChild(nameInput);
   el.appendChild(desc);
   return { el };
-}
-
-function skillPool(skillDef, stats, rank) {
-  const vals = skillDef.diceCheck.map(s => stats[s] || 0);
-  const higher = Math.max(...vals);
-  const lower = Math.min(...vals);
-  return rank >= 1 ? higher + rank : lower;
 }
 
 function generalSkillRow(skillDef, npc, onChange) {
@@ -935,7 +929,7 @@ function appendCopyBtn(card, getText) {
   card.appendChild(btn);
 }
 
-function appendInitiativeBtn(card, getName, suggestedSlot) {
+function appendInitiativeBtn(card, getName, getSuggestedSlot) {
   const wrap = document.createElement('span');
   wrap.className = 'inline-actions';
 
@@ -948,7 +942,6 @@ function appendInitiativeBtn(card, getName, suggestedSlot) {
   input.min = '1';
   input.max = '12';
   input.className = 'input-narrow hidden';
-  if (suggestedSlot != null) input.value = String(suggestedSlot);
 
   const confirmBtn = document.createElement('button');
   confirmBtn.textContent = 'Confirm';
@@ -958,6 +951,8 @@ function appendInitiativeBtn(card, getName, suggestedSlot) {
   status.className = 'text-muted-sm';
 
   btn.addEventListener('click', () => {
+    const suggestedSlot = typeof getSuggestedSlot === 'function' ? getSuggestedSlot() : getSuggestedSlot;
+    if (suggestedSlot != null) input.value = String(suggestedSlot);
     btn.classList.add('hidden');
     input.classList.remove('hidden');
     confirmBtn.classList.remove('hidden');
