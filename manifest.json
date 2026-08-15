@@ -4,8 +4,8 @@
   "description": "GM companion app for the Coyote and Crow TTRPG",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#1a0f00",
-  "theme_color": "#c8860a",
+  "background_color": "#15100b",
+  "theme_color": "#15100b",
   "icons": [
     { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" }
   ]

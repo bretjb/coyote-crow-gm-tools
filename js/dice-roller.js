@@ -4,14 +4,14 @@ export async function init(container) {
   container.innerHTML = `
     <div class="dice-roller">
       <h2>Dice Roller</h2>
-      <div class="dice-inputs" style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;margin-bottom:1rem;">
-        <label>Dice: <input id="dice-count" type="number" value="3" min="1" max="30" style="width:4rem;"></label>
-        <label>Target: <input id="dice-target" type="number" value="8" min="1" max="12" style="width:4rem;"></label>
+      <div class="dice-inputs">
+        <label>Dice: <input id="dice-count" type="number" value="3" min="1" max="30" class="input-narrow"></label>
+        <label>Target: <input id="dice-target" type="number" value="8" min="1" max="12" class="input-narrow"></label>
         <button id="dice-roll">Roll</button>
         <button id="dice-clear" class="secondary">Clear</button>
       </div>
-      <div id="dice-faces" style="margin-bottom:0.75rem;"></div>
-      <div id="dice-summary" style="font-size:1.1rem;color:var(--accent);"></div>
+      <div id="dice-faces" class="dice-faces"></div>
+      <div id="dice-summary" class="dice-summary"></div>
     </div>
   `;
 

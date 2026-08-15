@@ -1,6 +1,6 @@
-# Coyote & Crow — GM Quick Reference
+# Coyote & Crow — GM Quick Reference (Raw)
 
-## The D12 System — Making a Check
+## 1. The D12 System — Making a Check
 
 **Steps:**
 1. Create a Dice Pool
@@ -96,9 +96,7 @@ Used when success builds up over an interval, no active opposition (if opposed, 
 - Failure = no progress; Critical Failure = setback/lost progress.
 - **Invention** (new tech/ceremony/etc.): only Critical Successes count, default SN 12, must also be a Long-Term Goal.
 
-## Stats
-
-*9 total, scale 1–5 typically; 5 draws attention; 6+ requires Notoriety Gift.*
+## 2. Stats (9 total, scale 1–5 typically; 5 draws attention; 6+ requires Notoriety Gift)
 
 | Category | Power | Finesse | Reserve |
 |---|---|---|---|
@@ -125,9 +123,9 @@ Used when success builds up over an interval, no active opposition (if opposed, 
 - **Mind** = Intelligence + Perception + Wisdom
 - **Soul** = Spirit + Charisma + Will
 
-## Skills
+---
 
-*27 General Skills; `*` = cannot use at Rank 0.*
+## 3. Skills (27 General Skills; `*` = cannot use at Rank 0)
 
 | Skill | Related Stats | One-line summary |
 |---|---|---|
@@ -162,7 +160,9 @@ Used when success builds up over an interval, no active opposition (if opposed, 
 
 **Purchasing (Character creation):** Rank cost — General: 1/3/6/10/15/21 for Ranks 1–6. Specialized: X/1/3/6/10/15 (must exceed connected General Skill's Rank when first taken).
 
-## Encounters
+---
+
+## 4. Encounters
 
 ### Initiative
 - Everyone's **Initiative Score** = Agility + Perception + Charisma (+ mods).
@@ -230,7 +230,9 @@ Social advantage/disadvantage: minor ±1, major ±2, critical ±3 (e.g. Social S
 - **Spirits/Gods:** often incorporeal (physical attacks do nothing unless stated) and can planar-travel (~teleport).
 - **The Black:** Spiritual Stats sub for Physical ones (Spirit→Strength, Charisma→Agility, Will→Endurance); all Damage there is Spiritual; no gear carries over.
 
-## Damage, States & Healing
+---
+
+## 5. Damage, States & Healing
 
 ### Core Loop
 Successes on an attack = points of Damage (Body/Mind/Soul depending on attack type). Stat Damage (see below) is always applied **last**.
@@ -275,3 +277,20 @@ Successes on an attack = points of Damage (Body/Mind/Soul depending on attack ty
 - Spending Soul as Fortitude counts double (2 pts of effect per 1 Soul spent) for the Encounter's duration (see Wolverine's Resolve Ability, character.md ~L867, ~L1217).
 - Some Fortitude use lets you later Reaction Roll (Spirit + Endurance) to recover up to (amount spent − 1) Soul.
 - **TODO: pull the full core Fortitude rule from the SG/Combat chapter — not present in the chapters exported here.**
+
+---
+
+## 6. Suggestions for Things to Add to a Running GM Reference
+
+- **One-page SN cheat sheet**: default 8, Stealth vs. lighting/cover table (system.md/character.md Stealth entry has good numbers already), Panic Success thresholds (2/5/etc.), Contested Check math reminder ("need Successes ≥ opponent's pool, not just more").
+- **Combat flow card**: Surprise → Initiative → Round loop (Primary + Secondary in order) → Defend/Cover/Dodge reminders → Damage → Stat Damage last → States check.
+- **Archetype/Path bonus table** (already partly in data/motivations.json / data as canonical data — cross-reference rather than duplicate).
+- **Common weapon/gear dice bonuses** — pull from the Equipment chapter (not in the files reviewed here) so ranged/melee bonuses are on the same page as Skills.
+- **NPC stat-block shorthand**: since Body/Mind/Soul/Defenses are all just sums of 3 Stats each, a fast NPC generator (pick 3 Physical, 3 Mental, 3 Spiritual Stats, derive the rest) would speed up prep.
+- **Story Event prompt list**: a small table of "flavor" complications for Crit Success/Crit Fail so you're not improvising cold at the table.
+- **Session structure reminder**: Narrative Play ⇄ Encounter is fluid; note when you're deliberately shifting modes so players know Initiative applies.
+- **Ceremony SN modifier table** (already captured above under Ceremony) — worth its own callout card since it's easy to forget the stacking +1/+2/+3/-1/+4 modifiers.
+- **Gifts/Burdens quick index** — Level 1–3 effect sizing (±1/±2/±3 SN as a baseline) plus the special-cased ones (Financial, Notoriety, Companions) that don't follow the flat SN rule.
+- **The Black — quick conversion card**: Spirit→Strength, Charisma→Agility, Will→Endurance, no gear, all Damage is Spiritual.
+- **Fortitude full write-up** — flagged above as missing from the excerpted chapters; worth tracking down before this goes to print.
+- **Safety tools / table social contract note** — Coyote & Crow's text is explicit about consent (Charm never overrides it) and inclusion ("bigots and racists are not allowed to play") — worth a line on your GM card as a table-culture reminder, not just a rules note.

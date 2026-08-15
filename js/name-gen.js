@@ -63,10 +63,10 @@ const history = [];
 
 export async function init(container) {
   container.innerHTML = `
-    <h2 style="margin-bottom:1rem;">Name Generator</h2>
+    <h2 class="mb-1">Name Generator</h2>
     <button id="gen-name-btn">Generate Name</button>
-    <div id="name-result" style="margin:1rem 0;font-size:1.4rem;"></div>
-    <div id="name-history" style="color:var(--muted);"></div>
+    <div id="name-result" class="name-result"></div>
+    <div id="name-history" class="name-history"></div>
   `;
 
   let data;
@@ -87,8 +87,7 @@ export async function init(container) {
     nameSpan.textContent = name + ' ';
     const copyBtn = document.createElement('button');
     copyBtn.textContent = 'Copy';
-    copyBtn.className = 'secondary';
-    copyBtn.style.fontSize = '0.75rem';
+    copyBtn.className = 'secondary copy-btn-sm';
     copyBtn.addEventListener('click', () => navigator.clipboard.writeText(name));
     resultEl.appendChild(nameSpan);
     resultEl.appendChild(copyBtn);
@@ -96,7 +95,7 @@ export async function init(container) {
     history.unshift(name);
     if (history.length > 5) history.pop();
     const histEl = container.querySelector('#name-history');
-    histEl.innerHTML = '<p style="font-size:0.8rem;margin-bottom:0.25rem;">Recent:</p>' +
+    histEl.innerHTML = '<p class="name-history-label">Recent:</p>' +
       history.map(n => `<div>${n}</div>`).join('');
   });
 }

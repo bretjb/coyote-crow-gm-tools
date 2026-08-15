@@ -3,14 +3,14 @@ import { getState, addCombatant, removeCombatant, moveCombatant, nextStep, prevS
 
 export async function init(container) {
   container.innerHTML = `
-    <h2 style="margin-bottom:1rem;">Initiative Tracker</h2>
-    <form id="init-form" style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1rem;">
-      <input id="init-name" type="text" placeholder="Name" required style="flex:1;min-width:8rem;">
-      <input id="init-slot" type="number" placeholder="Slot" min="1" max="12" value="1" required style="width:5rem;">
+    <h2 class="mb-1">Initiative Tracker</h2>
+    <form id="init-form" class="init-form">
+      <input id="init-name" type="text" placeholder="Name" required class="init-name-input">
+      <input id="init-slot" type="number" placeholder="Slot" min="1" max="12" value="1" required class="init-slot-input">
       <button type="submit">Add</button>
     </form>
     <div id="init-slots"></div>
-    <div style="display:flex;gap:0.5rem;margin-top:1rem;">
+    <div class="init-actions">
       <button id="init-prev" class="secondary">Prev Step</button>
       <button id="init-next">Next Step</button>
       <button id="init-clear" class="secondary">Clear All</button>
@@ -26,19 +26,17 @@ export async function init(container) {
       const combatants = slots[slotNum];
       const isCurrent = slotNum === currentStep;
       const chips = combatants.map(c => `
-        <span class="init-chip" data-id="${c.id}" style="display:inline-flex;align-items:center;gap:0.3rem;
-            background:var(--bg);border:1px solid var(--border);border-radius:3px;padding:0.2rem 0.4rem;margin:0.15rem;">
-          <span class="init-drag-handle" style="cursor:grab;touch-action:none;color:var(--muted);">⠿</span>
+        <span class="init-chip" data-id="${c.id}">
+          <span class="init-drag-handle">⠿</span>
           <span>${c.name}</span>
-          <input type="number" class="init-move" min="1" max="12" placeholder="→" style="width:3rem;">
-          <button type="button" class="init-remove secondary" style="padding:0.1rem 0.4rem;">×</button>
+          <input type="number" class="init-move init-move-input" min="1" max="12" placeholder="→">
+          <button type="button" class="init-remove secondary">×</button>
         </span>
       `).join('');
       return `
-        <div class="card init-slot-row" data-slot="${slotNum}" style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.4rem;
-            ${isCurrent ? 'border-color:var(--accent);' : ''}">
-          <span style="min-width:2rem;font-size:1.1rem;color:var(--accent);">${isCurrent ? '▶ ' : ''}${slotNum}</span>
-          <div style="flex:1;display:flex;flex-wrap:wrap;">${chips}</div>
+        <div class="card init-slot-row${isCurrent ? ' current' : ''}" data-slot="${slotNum}">
+          <span class="init-slot-num">${isCurrent ? '▶ ' : ''}${slotNum}</span>
+          <div class="init-chips-wrap">${chips}</div>
         </div>
       `;
     }).join('');
@@ -71,8 +69,7 @@ export async function init(container) {
 
   function clearDragHighlight() {
     if (dragHighlightRow) {
-      dragHighlightRow.style.outline = '';
-      dragHighlightRow.style.outlineOffset = '';
+      dragHighlightRow.classList.remove('drag-target');
       dragHighlightRow = null;
     }
   }
@@ -115,8 +112,7 @@ export async function init(container) {
       if (row !== dragHighlightRow) {
         clearDragHighlight();
         if (row) {
-          row.style.outline = '2px dashed var(--accent)';
-          row.style.outlineOffset = '-2px';
+          row.classList.add('drag-target');
           dragHighlightRow = row;
         }
       }
