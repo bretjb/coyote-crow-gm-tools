@@ -276,8 +276,8 @@ function renderQuickCard(npc, savedEntry) {
     <p><strong>Personality:</strong> ${esc(npc.personality)}</p>
     <p><strong>Motivation:</strong> ${esc(npc.motivation)}</p>
   `;
-  appendCopyBtn(card, `${npc.name}\nRole: ${npc.role}\nPersonality: ${npc.personality}\nMotivation: ${npc.motivation}`);
-  appendInitiativeBtn(card, npc.name, null);
+  appendCopyBtn(card, () => `${npc.name}\nRole: ${npc.role}\nPersonality: ${npc.personality}\nMotivation: ${npc.motivation}`);
+  appendInitiativeBtn(card, () => npc.name, null);
   appendSaveControls(card, 'quick', npc, savedEntry);
   return card;
 }
@@ -292,7 +292,7 @@ function renderFullCard(npc, ctx, savedEntry) {
     : 'None';
 
   card.innerHTML = `
-    <h2>${esc(npc.name)}</h2>
+    <div id="name-section" class="row-flex-wrap mb-0-5"></div>
     <p class="npc-meta">${esc(npc.archetype)} · ${esc(npc.age)} · ${esc(npc.gender)} · ${esc(npc.sexuality)}</p>
     <p class="npc-meta-sm">+1 ${esc(npc.archetypeStatBonus)} · free rank: ${esc(npc.freeSkill)}</p>
     <p><strong>Motivation:</strong> ${esc(npc.motivation.name)}</p>
@@ -311,6 +311,26 @@ function renderFullCard(npc, ctx, savedEntry) {
       <span class="text-muted-sm">[${esc(npc.ability.diceCheck.join(' + '))}]</span>
     </p>
   `;
+
+  const nameSectionEl = card.querySelector('#name-section');
+  const nameInput = document.createElement('input');
+  nameInput.type = 'text';
+  nameInput.className = 'input-name';
+  nameInput.value = npc.name;
+  nameInput.addEventListener('change', () => {
+    const v = nameInput.value.trim();
+    npc.name = v || npc.name;
+    nameInput.value = npc.name;
+  });
+  const regenBtn = document.createElement('button');
+  regenBtn.textContent = 'Regenerate Name';
+  regenBtn.className = 'secondary';
+  regenBtn.addEventListener('click', () => {
+    npc.name = generateName(ctx.nameData);
+    nameInput.value = npc.name;
+  });
+  nameSectionEl.appendChild(nameInput);
+  nameSectionEl.appendChild(regenBtn);
 
   const statSectionEl = card.querySelector('#stat-section');
   const skillSectionEl = card.querySelector('#skill-section');
@@ -335,8 +355,8 @@ function renderFullCard(npc, ctx, savedEntry) {
     rollResult.innerHTML = `<strong>${esc(label)}</strong> (${pool} dice): ${faces} — <strong>${successes} success${successes !== 1 ? 'es' : ''}</strong>`;
   });
 
-  appendCopyBtn(card, npcToText(npc));
-  appendInitiativeBtn(card, npc.name, Math.min(12, Math.max(1, npc.derived.Initiative)));
+  appendCopyBtn(card, () => npcToText(npc));
+  appendInitiativeBtn(card, () => npc.name, Math.min(12, Math.max(1, npc.derived.Initiative)));
   appendSaveControls(card, 'full', npc, savedEntry);
   return card;
 }
@@ -609,48 +629,40 @@ function appendSaveControls(card, kind, npc, savedEntry) {
   card.appendChild(wrap);
 }
 
-function appendCopyBtn(card, text) {
+function appendCopyBtn(card, getText) {
   const btn = document.createElement('button');
   btn.textContent = 'Copy';
-  btn.className = 'secondary';
-  btn.style.marginTop = '0.5rem';
-  btn.addEventListener('click', () => navigator.clipboard.writeText(text));
+  btn.className = 'secondary mt-0-5';
+  btn.addEventListener('click', () => navigator.clipboard.writeText(getText()));
   card.appendChild(btn);
 }
 
-function appendInitiativeBtn(card, name, suggestedSlot) {
+function appendInitiativeBtn(card, getName, suggestedSlot) {
   const wrap = document.createElement('span');
-  wrap.style.marginLeft = '0.5rem';
-  wrap.style.display = 'inline-flex';
-  wrap.style.alignItems = 'center';
-  wrap.style.gap = '0.3rem';
+  wrap.className = 'inline-actions';
 
   const btn = document.createElement('button');
   btn.textContent = 'Add to Initiative';
-  btn.className = 'secondary';
-  btn.style.marginTop = '0.5rem';
+  btn.className = 'secondary mt-0-5';
 
   const input = document.createElement('input');
   input.type = 'number';
   input.min = '1';
   input.max = '12';
-  input.style.width = '4rem';
-  input.style.display = 'none';
+  input.className = 'input-narrow hidden';
   if (suggestedSlot != null) input.value = String(suggestedSlot);
 
   const confirmBtn = document.createElement('button');
   confirmBtn.textContent = 'Confirm';
-  confirmBtn.style.display = 'none';
-  confirmBtn.style.marginTop = '0.5rem';
+  confirmBtn.className = 'hidden mt-0-5';
 
   const status = document.createElement('span');
-  status.style.color = 'var(--muted)';
-  status.style.fontSize = '0.85rem';
+  status.className = 'text-muted-sm';
 
   btn.addEventListener('click', () => {
-    btn.style.display = 'none';
-    input.style.display = '';
-    confirmBtn.style.display = '';
+    btn.classList.add('hidden');
+    input.classList.remove('hidden');
+    confirmBtn.classList.remove('hidden');
     input.focus();
   });
 
@@ -660,9 +672,9 @@ function appendInitiativeBtn(card, name, suggestedSlot) {
       status.textContent = 'Enter a slot 1-12';
       return;
     }
-    addCombatant(name, slot);
-    input.style.display = 'none';
-    confirmBtn.style.display = 'none';
+    addCombatant(getName(), slot);
+    input.classList.add('hidden');
+    confirmBtn.classList.add('hidden');
     status.textContent = `Added to Initiative slot ${slot}`;
   });
 

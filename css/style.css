@@ -97,6 +97,11 @@ input, select, textarea {
 .text-muted-sm { color: var(--muted); font-size: 0.85rem; }
 .mb-0-5 { margin-bottom: 0.5rem; }
 .mb-0-75 { margin-bottom: 0.75rem; }
+.mt-0-5 { margin-top: 0.5rem; }
+.row-flex-wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.inline-actions { display: inline-flex; align-items: center; gap: 0.3rem; margin-left: 0.5rem; }
+.input-narrow { width: 4rem; }
+.input-name { flex: 1; min-width: 8rem; font-size: 1.3rem; font-family: inherit; color: var(--accent); }
 .h3-section { margin: 0.75rem 0 0.35rem; }
 .h3-note { color: var(--muted); font-size: 0.75rem; font-weight: normal; }
 .skill-roll-result { min-height: 1.5rem; margin-bottom: 0.75rem; }
