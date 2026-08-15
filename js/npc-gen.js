@@ -1,5 +1,5 @@
 import { loadNameData, generateName } from './name-gen.js';
-import { allocateStats, calcDerivedStats, allocateSkills, selectGiftsBurdens, selectAbility } from './npc-character-gen.js';
+import { allocateStats, calcDerivedStats, allocateSkills, selectGiftsBurdens, selectAbility, clampStat, clampSkillRank } from './npc-character-gen.js';
 import { rollDice, countSuccesses } from './dice.js';
 import { addCombatant } from './initiative-state.js';
 import { saveNpc, updateNpc, getAll, removeNpc, undoRemove, subscribe, exportAll, importMerge } from './npc-storage.js';
@@ -67,8 +67,9 @@ export async function init(container) {
 
   const output = container.querySelector('#npc-output');
   const savedListEl = container.querySelector('#npc-saved-list');
-  renderSavedList(savedListEl, output, allSkills);
-  subscribe(() => renderSavedList(savedListEl, output, allSkills));
+  const ctx = { nameData, components, motivations, paths, giftsAndBurdens, allSkills, abilities, archetypes };
+  renderSavedList(savedListEl, output, ctx);
+  subscribe(() => renderSavedList(savedListEl, output, ctx));
 
   container.querySelector('#npc-export-all').addEventListener('click', () => {
     const json = exportAll();
@@ -117,7 +118,7 @@ export async function init(container) {
     const archetype = archetypes[Math.floor(Math.random() * archetypes.length)];
     const npc = generateFullNpc({ nameData, motivations, paths, giftsAndBurdens, allSkills, abilities, archetype });
     output.innerHTML = '';
-    output.appendChild(renderFullCard(npc, allSkills));
+    output.appendChild(renderFullCard(npc, ctx, undefined));
   });
 }
 
@@ -134,6 +135,7 @@ function generateFullNpc({ nameData, motivations, paths, giftsAndBurdens, allSki
   if (!skills[freeSkill]) skills[freeSkill] = { general: 1 };
   else skills[freeSkill].general++;
 
+  const derived = calcDerivedStats(stats);
   return {
     name: generateName(nameData),
     motivation: pick(motivations),
@@ -148,7 +150,8 @@ function generateFullNpc({ nameData, motivations, paths, giftsAndBurdens, allSki
     stats,
     skills,
     ability: selectAbility(abilities, archetype.statPriorities),
-    derived: calcDerivedStats(stats),
+    derived,
+    current: { Body: derived.Body, Mind: derived.Mind, Soul: derived.Soul },
   };
 }
 
@@ -160,6 +163,108 @@ function weightedPickDemographic(options) {
     if (r <= 0) return opt.value;
   }
   return options[options.length - 1].value;
+}
+
+function ensureCurrent(npc) {
+  if (!npc.current) {
+    npc.current = { Body: npc.derived.Body, Mind: npc.derived.Mind, Soul: npc.derived.Soul };
+  }
+}
+
+function recalcDerivedAndSyncCurrent(npc) {
+  const prevDerived = npc.derived;
+  const prevCurrent = npc.current;
+  const newDerived = calcDerivedStats(npc.stats);
+  const newCurrent = {};
+  for (const key of ['Body', 'Mind', 'Soul']) {
+    newCurrent[key] = prevCurrent[key] === prevDerived[key]
+      ? newDerived[key]
+      : Math.min(prevCurrent[key], newDerived[key]);
+  }
+  npc.derived = newDerived;
+  npc.current = newCurrent;
+}
+
+const STAT_ABBR = {
+  Strength: 'STR', Agility: 'AGI', Endurance: 'END',
+  Intelligence: 'INT', Perception: 'PER', Wisdom: 'WIS',
+  Spirit: 'SPI', Charisma: 'CHA', Will: 'WILL',
+};
+const DEFENSE_ABBR = { 'Physical Defence': 'PD', 'Mental Defence': 'MD', 'Mystical Defence': 'SD' };
+
+function statCell(statName, npc, onChange) {
+  const td = document.createElement('td');
+  const label = document.createElement('span');
+  label.className = 'stat-cell-label';
+  label.textContent = STAT_ABBR[statName];
+  const input = document.createElement('input');
+  input.type = 'number';
+  input.min = '1';
+  input.max = '5';
+  input.className = 'stat-input';
+  input.value = npc.stats[statName];
+  input.addEventListener('change', () => {
+    npc.stats[statName] = clampStat(input.value);
+    recalcDerivedAndSyncCurrent(npc);
+    onChange();
+  });
+  td.appendChild(label);
+  td.appendChild(document.createElement('br'));
+  td.appendChild(input);
+  return td;
+}
+
+function readOnlyCell(label, value) {
+  const td = document.createElement('td');
+  td.innerHTML = `<span class="stat-cell-label">${esc(label)}</span><br><span class="stat-cell-value">${esc(value)}</span>`;
+  return td;
+}
+
+function currentCell(bodyKey, npc) {
+  const td = document.createElement('td');
+  const label = document.createElement('span');
+  label.className = 'stat-cell-label';
+  label.textContent = `${bodyKey} (Current)`;
+  const input = document.createElement('input');
+  input.type = 'number';
+  input.min = '0';
+  input.className = 'stat-input';
+  input.value = npc.current[bodyKey];
+  input.addEventListener('change', () => {
+    const max = npc.derived[bodyKey];
+    npc.current[bodyKey] = Math.min(max, Math.max(0, Math.round(Number(input.value)) || 0));
+    input.value = npc.current[bodyKey];
+  });
+  td.appendChild(label);
+  td.appendChild(document.createElement('br'));
+  td.appendChild(input);
+  return td;
+}
+
+function buildStatSection(npc, onChange) {
+  const wrap = document.createElement('div');
+  wrap.className = 'stat-table-wrap';
+  const table = document.createElement('table');
+  table.className = 'stat-table';
+  const tbody = document.createElement('tbody');
+  const rows = [
+    ['Strength', 'Agility', 'Endurance', 'Physical Defence', 'Body'],
+    ['Intelligence', 'Perception', 'Wisdom', 'Mental Defence', 'Mind'],
+    ['Spirit', 'Charisma', 'Will', 'Mystical Defence', 'Soul'],
+  ];
+  for (const [s1, s2, s3, defKey, bodyKey] of rows) {
+    const tr = document.createElement('tr');
+    tr.appendChild(statCell(s1, npc, onChange));
+    tr.appendChild(statCell(s2, npc, onChange));
+    tr.appendChild(statCell(s3, npc, onChange));
+    tr.appendChild(readOnlyCell(DEFENSE_ABBR[defKey], npc.derived[defKey]));
+    tr.appendChild(readOnlyCell(bodyKey, npc.derived[bodyKey]));
+    tr.appendChild(currentCell(bodyKey, npc));
+    tbody.appendChild(tr);
+  }
+  table.appendChild(tbody);
+  wrap.appendChild(table);
+  return wrap;
 }
 
 function renderQuickCard(npc, savedEntry) {
@@ -177,7 +282,8 @@ function renderQuickCard(npc, savedEntry) {
   return card;
 }
 
-function renderFullCard(npc, allSkills, savedEntry) {
+function renderFullCard(npc, ctx, savedEntry) {
+  ensureCurrent(npc);
   const card = document.createElement('div');
   card.className = 'card';
 
@@ -187,58 +293,37 @@ function renderFullCard(npc, allSkills, savedEntry) {
 
   card.innerHTML = `
     <h2>${esc(npc.name)}</h2>
-    <p style="color:var(--muted);margin-bottom:0.25rem;">${esc(npc.archetype)} · ${esc(npc.age)} · ${esc(npc.gender)} · ${esc(npc.sexuality)}</p>
-    <p style="color:var(--muted);font-size:0.8rem;margin-bottom:0.75rem;">+1 ${esc(npc.archetypeStatBonus)} · free rank: ${esc(npc.freeSkill)}</p>
+    <p class="npc-meta">${esc(npc.archetype)} · ${esc(npc.age)} · ${esc(npc.gender)} · ${esc(npc.sexuality)}</p>
+    <p class="npc-meta-sm">+1 ${esc(npc.archetypeStatBonus)} · free rank: ${esc(npc.freeSkill)}</p>
     <p><strong>Motivation:</strong> ${esc(npc.motivation.name)}</p>
-    <p><strong>Path:</strong> ${esc(npc.path.name)} <span style="color:var(--muted);font-size:0.85rem;">(+1 ${esc(npc.path.statBonuses.join(', +1 '))})</span></p>
-    <p style="margin-bottom:0.75rem;"><strong>Gifts/Burdens:</strong> ${esc(gb)}</p>
+    <p><strong>Path:</strong> ${esc(npc.path.name)} <span class="text-muted-sm">(+1 ${esc(npc.path.statBonuses.join(', +1 '))})</span></p>
+    <p class="mb-0-75"><strong>Gifts/Burdens:</strong> ${esc(gb)}</p>
 
-    <h3 style="margin-bottom:0.5rem;">Stats</h3>
-    <div class="stat-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.4rem;margin-bottom:0.75rem;">
-      ${Object.entries(npc.stats).map(([k, v]) => `
-        <div style="background:var(--bg);padding:0.3rem 0.5rem;border-radius:3px;border:1px solid var(--border);">
-          <span style="color:var(--muted);font-size:0.75rem;">${esc(k)}</span><br>
-          <span style="font-size:1.1rem;color:var(--accent);">${esc(v)}</span>
-        </div>`).join('')}
-    </div>
+    <h3 class="mb-0-5">Stats</h3>
+    <div id="stat-section"></div>
 
-    <h3 style="margin-bottom:0.5rem;">Derived</h3>
-    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:0.3rem;margin-bottom:0.75rem;font-size:0.85rem;">
-      ${Object.entries(npc.derived).map(([k, v]) => `
-        <div><span style="color:var(--muted);">${esc(k)}:</span> <strong>${esc(v)}</strong></div>`).join('')}
-    </div>
+    <h3 class="h3-section">General Skills <span class="h3-note">(click to roll)</span></h3>
+    <div id="skill-section"></div>
+    <div id="skill-roll-result" class="skill-roll-result"></div>
 
-    <h3 style="margin:0.75rem 0 0.35rem;">General Skills <span style="color:var(--muted);font-size:0.75rem;font-weight:normal;">(click to roll)</span></h3>
-    <div id="general-skill-table" class="skill-table-wrap"></div>
-    <div id="spec-skill-section"></div>
-    <div id="skill-roll-result" style="min-height:1.5rem;margin-bottom:0.75rem;"></div>
-
-    <h3 style="margin-bottom:0.25rem;">Ability</h3>
-    <p style="margin-bottom:0.75rem;"><strong>${esc(npc.ability.name)}</strong> — ${esc(npc.ability.description)}
-      <span style="color:var(--muted);font-size:0.8rem;">[${esc(npc.ability.diceCheck.join(' + '))}]</span>
+    <h3 class="mb-0-5">Ability</h3>
+    <p class="mb-0-75"><strong>${esc(npc.ability.name)}</strong> — ${esc(npc.ability.description)}
+      <span class="text-muted-sm">[${esc(npc.ability.diceCheck.join(' + '))}]</span>
     </p>
   `;
 
-  // General skills table — all 28 skills, unranked rows muted
+  const statSectionEl = card.querySelector('#stat-section');
+  const skillSectionEl = card.querySelector('#skill-section');
   const rollResult = card.querySelector('#skill-roll-result');
-  card.querySelector('#general-skill-table').appendChild(
-    buildSkillTable(allSkills, npc.stats, npc.skills)
-  );
 
-  // Specialized skills table — only if any exist
-  const specEntries = Object.entries(npc.skills)
-    .filter(([, d]) => d.specialized)
-    .map(([generalName, d]) => ({ generalName, name: d.specialized.name, rank: d.specialized.rank }));
-  if (specEntries.length > 0) {
-    const sec = card.querySelector('#spec-skill-section');
-    sec.innerHTML = '<h3 style="margin:0.75rem 0 0.35rem;">Specialized Skills</h3>';
-    const wrap = document.createElement('div');
-    wrap.className = 'skill-table-wrap';
-    wrap.appendChild(buildSpecTable(allSkills, npc.stats, specEntries));
-    sec.appendChild(wrap);
+  function rebuildBody() {
+    statSectionEl.innerHTML = '';
+    statSectionEl.appendChild(buildStatSection(npc, rebuildBody));
+    skillSectionEl.innerHTML = '';
+    skillSectionEl.appendChild(buildSkillSection(npc, ctx.allSkills, rebuildBody));
   }
+  rebuildBody();
 
-  // Roll handler — shared by both tables
   card.addEventListener('click', e => {
     const row = e.target.closest('tr[data-pool]');
     if (!row) return;
@@ -263,34 +348,107 @@ function skillPool(skillDef, stats, rank) {
   return rank >= 1 ? higher + rank : lower;
 }
 
-function buildSkillTable(allSkills, stats, acquiredSkills) {
+function generalSkillRow(skillDef, npc, onChange) {
+  const acquired = npc.skills[skillDef.name];
+  const rank = acquired ? acquired.general : 0;
+  const vals = skillDef.diceCheck.map(s => npc.stats[s] || 0);
+  const higher = Math.max(...vals);
+  const lower = Math.min(...vals);
+  const usedVal = rank >= 1 ? higher : lower;
+  const usedName = rank >= 1
+    ? skillDef.diceCheck[vals.indexOf(higher)]
+    : skillDef.diceCheck[vals.lastIndexOf(lower)];
+  const pool = rank >= 1 ? higher + rank : lower;
+
+  const tr = document.createElement('tr');
+  if (rank === 0) tr.className = 'unranked';
+  tr.dataset.pool = pool;
+  tr.dataset.skillName = skillDef.name + (skillDef.requiresRank ? '*' : '');
+
+  const nameTd = document.createElement('td');
+  nameTd.textContent = skillDef.name + (skillDef.requiresRank ? '*' : '');
+  const statTd = document.createElement('td');
+  statTd.textContent = `${usedName} ${usedVal}`;
+
+  const rankTd = document.createElement('td');
+  const rankInput = document.createElement('input');
+  rankInput.type = 'number';
+  rankInput.min = '0';
+  rankInput.max = '6';
+  rankInput.className = 'skill-rank-input';
+  rankInput.value = rank;
+  rankInput.addEventListener('click', e => e.stopPropagation());
+  rankInput.addEventListener('change', () => {
+    setGeneralRank(npc, skillDef.name, rankInput.value);
+    onChange();
+  });
+  rankTd.appendChild(rankInput);
+
+  const totalTd = document.createElement('td');
+  totalTd.textContent = pool;
+
+  tr.appendChild(nameTd);
+  tr.appendChild(statTd);
+  tr.appendChild(rankTd);
+  tr.appendChild(totalTd);
+  return tr;
+}
+
+function setGeneralRank(npc, name, rawValue) {
+  const rank = clampSkillRank(rawValue);
+  const existing = npc.skills[name];
+  if (rank === 0) {
+    if (existing?.specialized) {
+      existing.general = 0;
+    } else {
+      delete npc.skills[name];
+    }
+    return;
+  }
+  if (!existing) {
+    npc.skills[name] = { general: rank };
+  } else {
+    existing.general = rank;
+  }
+}
+
+function buildGeneralSkillTable(skillsSubset, npc, onChange) {
+  const wrap = document.createElement('div');
+  wrap.className = 'skill-table-wrap';
   const table = document.createElement('table');
   table.className = 'skill-table';
   table.innerHTML = '<thead><tr><th>Skill</th><th>Stat</th><th>Rank</th><th>Total</th></tr></thead>';
   const tbody = document.createElement('tbody');
-
-  for (const skillDef of allSkills) {
-    const acquired = acquiredSkills[skillDef.name];
-    const rank = acquired ? acquired.general : 0;
-    const vals = skillDef.diceCheck.map(s => stats[s] || 0);
-    const higher = Math.max(...vals);
-    const lower = Math.min(...vals);
-    const usedVal = rank >= 1 ? higher : lower;
-    const usedName = rank >= 1
-      ? skillDef.diceCheck[vals.indexOf(higher)]
-      : skillDef.diceCheck[vals.lastIndexOf(lower)];
-    const pool = rank >= 1 ? higher + rank : lower;
-
-    const tr = document.createElement('tr');
-    if (rank === 0) tr.className = 'unranked';
-    tr.dataset.pool = pool;
-    tr.dataset.skillName = skillDef.name + (skillDef.requiresRank ? '*' : '');
-    tr.innerHTML = `<td>${skillDef.name}${skillDef.requiresRank ? '<span style="color:var(--muted);">*</span>' : ''}</td><td>${usedName} ${usedVal}</td><td>${rank}</td><td>${pool}</td>`;
-    tbody.appendChild(tr);
+  for (const skillDef of skillsSubset) {
+    tbody.appendChild(generalSkillRow(skillDef, npc, onChange));
   }
-
   table.appendChild(tbody);
-  return table;
+  wrap.appendChild(table);
+  return wrap;
+}
+
+function buildSkillSection(npc, allSkills, onChange) {
+  const wrap = document.createElement('div');
+  const half = Math.ceil(allSkills.length / 2);
+  const pair = document.createElement('div');
+  pair.className = 'skill-table-pair';
+  pair.appendChild(buildGeneralSkillTable(allSkills.slice(0, half), npc, onChange));
+  pair.appendChild(buildGeneralSkillTable(allSkills.slice(half), npc, onChange));
+  wrap.appendChild(pair);
+
+  const specEntries = Object.entries(npc.skills)
+    .filter(([, d]) => d.specialized)
+    .map(([generalName, d]) => ({ generalName, name: d.specialized.name, rank: d.specialized.rank }));
+  if (specEntries.length > 0) {
+    const sec = document.createElement('div');
+    sec.innerHTML = '<h3 class="h3-section">Specialized Skills</h3>';
+    const specWrap = document.createElement('div');
+    specWrap.className = 'skill-table-wrap';
+    specWrap.appendChild(buildSpecTable(allSkills, npc.stats, specEntries));
+    sec.appendChild(specWrap);
+    wrap.appendChild(sec);
+  }
+  return wrap;
 }
 
 function buildSpecTable(allSkills, stats, specEntries) {
@@ -430,7 +588,7 @@ function appendInitiativeBtn(card, name, suggestedSlot) {
   card.appendChild(wrap);
 }
 
-function renderSavedList(listEl, output, allSkills) {
+function renderSavedList(listEl, output, ctx) {
   const entries = getAll();
   listEl.innerHTML = '';
   if (entries.length === 0) {
@@ -464,7 +622,7 @@ function renderSavedList(listEl, output, allSkills) {
       nameBtn.addEventListener('click', () => {
         output.innerHTML = '';
         const card = entry.kind === 'full'
-          ? renderFullCard(entry.data, allSkills, { id: entry.id, note: entry.note })
+          ? renderFullCard(entry.data, ctx, { id: entry.id, note: entry.note })
           : renderQuickCard(entry.data, { id: entry.id, note: entry.note });
         output.appendChild(card);
       });
