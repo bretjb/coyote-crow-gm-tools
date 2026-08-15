@@ -295,7 +295,7 @@ function renderFullCard(npc, ctx, savedEntry) {
     <div id="name-section" class="row-flex-wrap mb-0-5"></div>
     <p class="npc-meta">${esc(npc.archetype)} · ${esc(npc.age)} · ${esc(npc.gender)} · ${esc(npc.sexuality)}</p>
     <p class="npc-meta-sm">+1 ${esc(npc.archetypeStatBonus)} · free rank: ${esc(npc.freeSkill)}</p>
-    <p><strong>Motivation:</strong> ${esc(npc.motivation.name)}</p>
+    <div id="motivation-section" class="mb-0-75"></div>
     <p><strong>Path:</strong> ${esc(npc.path.name)} <span class="text-muted-sm">(+1 ${esc(npc.path.statBonuses.join(', +1 '))})</span></p>
     <p class="mb-0-75"><strong>Gifts/Burdens:</strong> ${esc(gb)}</p>
 
@@ -307,9 +307,7 @@ function renderFullCard(npc, ctx, savedEntry) {
     <div id="skill-roll-result" class="skill-roll-result"></div>
 
     <h3 class="mb-0-5">Ability</h3>
-    <p class="mb-0-75"><strong>${esc(npc.ability.name)}</strong> — ${esc(npc.ability.description)}
-      <span class="text-muted-sm">[${esc(npc.ability.diceCheck.join(' + '))}]</span>
-    </p>
+    <div id="ability-section" class="mb-0-75"></div>
   `;
 
   const nameSectionEl = card.querySelector('#name-section');
@@ -331,6 +329,26 @@ function renderFullCard(npc, ctx, savedEntry) {
   });
   nameSectionEl.appendChild(nameInput);
   nameSectionEl.appendChild(regenBtn);
+
+  card.querySelector('#motivation-section').appendChild(
+    buildNamedDescField({
+      label: 'Motivation',
+      current: npc.motivation,
+      options: ctx.motivations,
+      onChange: v => { npc.motivation = v; },
+    }).el
+  );
+
+  card.querySelector('#ability-section').appendChild(
+    buildNamedDescField({
+      label: 'Ability',
+      current: npc.ability,
+      options: ctx.abilities,
+      onChange: v => { npc.ability = v; },
+      customShape: () => ({ name: '', description: '', diceCheck: [] }),
+      formatExtra: c => (c.diceCheck && c.diceCheck.length ? ` [${c.diceCheck.join(' + ')}]` : ''),
+    }).el
+  );
 
   const statSectionEl = card.querySelector('#stat-section');
   const skillSectionEl = card.querySelector('#skill-section');
@@ -359,6 +377,75 @@ function renderFullCard(npc, ctx, savedEntry) {
   appendInitiativeBtn(card, () => npc.name, Math.min(12, Math.max(1, npc.derived.Initiative)));
   appendSaveControls(card, 'full', npc, savedEntry);
   return card;
+}
+
+function buildNamedDescField({ label, current, options, onChange, customShape, formatExtra }) {
+  const el = document.createElement('div');
+  el.className = 'mb-0-75';
+
+  const row = document.createElement('div');
+  row.className = 'row-flex-wrap';
+  const labelEl = document.createElement('label');
+  labelEl.textContent = label;
+  labelEl.className = 'field-label';
+
+  const select = document.createElement('select');
+  for (const o of options) {
+    const opt = document.createElement('option');
+    opt.value = o.name;
+    opt.textContent = o.name;
+    select.appendChild(opt);
+  }
+  const customOpt = document.createElement('option');
+  customOpt.value = '__custom__';
+  customOpt.textContent = 'Custom...';
+  select.appendChild(customOpt);
+
+  const nameInput = document.createElement('input');
+  nameInput.type = 'text';
+  nameInput.className = 'hidden mt-0-5';
+
+  const desc = document.createElement('p');
+  desc.className = 'text-muted-sm';
+
+  function refreshDesc() {
+    desc.textContent = (current.description || '') + (formatExtra ? formatExtra(current) : '');
+  }
+
+  const known = options.find(o => o.name === current.name);
+  if (known) {
+    select.value = known.name;
+  } else {
+    select.value = '__custom__';
+    nameInput.value = current.name;
+    nameInput.classList.remove('hidden');
+  }
+  refreshDesc();
+
+  select.addEventListener('change', () => {
+    if (select.value === '__custom__') {
+      nameInput.classList.remove('hidden');
+      nameInput.value = '';
+      nameInput.focus();
+      current = customShape ? customShape() : { name: '', description: '' };
+    } else {
+      nameInput.classList.add('hidden');
+      current = options.find(o => o.name === select.value);
+    }
+    onChange(current);
+    refreshDesc();
+  });
+
+  nameInput.addEventListener('change', () => {
+    current.name = nameInput.value.trim();
+  });
+
+  row.appendChild(labelEl);
+  row.appendChild(select);
+  el.appendChild(row);
+  el.appendChild(nameInput);
+  el.appendChild(desc);
+  return { el };
 }
 
 function skillPool(skillDef, stats, rank) {

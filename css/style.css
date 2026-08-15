@@ -95,6 +95,7 @@ input, select, textarea {
 .npc-meta { color: var(--muted); margin-bottom: 0.25rem; }
 .npc-meta-sm { color: var(--muted); font-size: 0.8rem; margin-bottom: 0.75rem; }
 .text-muted-sm { color: var(--muted); font-size: 0.85rem; }
+.field-label { color: var(--muted); font-size: 0.85rem; }
 .mb-0-5 { margin-bottom: 0.5rem; }
 .mb-0-75 { margin-bottom: 0.75rem; }
 .mt-0-5 { margin-top: 0.5rem; }
