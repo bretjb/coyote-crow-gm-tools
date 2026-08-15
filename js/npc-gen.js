@@ -1045,9 +1045,15 @@ function npcToText(npc) {
   const gb = npc.giftsAndBurdens.map(gbLabel).join(', ') || 'None';
   const stats = Object.entries(npc.stats).map(([k,v]) => `  ${k}: ${v}`).join('\n');
   const derived = Object.entries(npc.derived).map(([k,v]) => `  ${k}: ${v}`).join('\n');
+  const current = npc.current
+    ? `\n\nCurrent:\n  Body: ${npc.current.Body}\n  Mind: ${npc.current.Mind}\n  Soul: ${npc.current.Soul}`
+    : '';
   const skills = Object.entries(npc.skills).map(([k,d]) => {
     const spec = d.specialized ? ` [${d.specialized.name} ${d.specialized.rank}]` : '';
     return `  ${k} ${d.general}${spec}`;
   }).join('\n');
-  return `${npc.name}\n${npc.archetype} (+1 ${npc.archetypeStatBonus}, free: ${npc.freeSkill}) · ${npc.age} · ${npc.gender} · ${npc.sexuality}\nMotivation: ${npc.motivation.name}\nPath: ${npc.path.name} (+1 ${npc.path.statBonuses.join(', +1 ')})\nGifts/Burdens: ${gb}\n\nStats:\n${stats}\n\nDerived:\n${derived}\n\nSkills:\n${skills}\n\nAbility: ${npc.ability.name} — ${npc.ability.description}`;
+  const pathLine = npc.path.statBonuses.length
+    ? `Path: ${npc.path.name} (+1 ${npc.path.statBonuses.join(', +1 ')})`
+    : `Path: ${npc.path.name}`;
+  return `${npc.name}\n${npc.archetype} (+1 ${npc.archetypeStatBonus}, free: ${npc.freeSkill}) · ${npc.age} · ${npc.gender} · ${npc.sexuality}\nMotivation: ${npc.motivation.name}\n${pathLine}\nGifts/Burdens: ${gb}\n\nStats:\n${stats}\n\nDerived:\n${derived}${current}\n\nSkills:\n${skills}\n\nAbility: ${npc.ability.name} — ${npc.ability.description}`;
 }
