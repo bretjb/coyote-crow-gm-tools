@@ -17,6 +17,25 @@ export function weightedRandom(items, weights) {
   return items[items.length - 1];
 }
 
+export function clampStat(v) {
+  const n = Math.round(Number(v));
+  if (Number.isNaN(n)) return 1;
+  return Math.min(5, Math.max(1, n));
+}
+
+export function clampSkillRank(v) {
+  const n = Math.round(Number(v));
+  if (Number.isNaN(n)) return 0;
+  return Math.min(6, Math.max(0, n));
+}
+
+export function clampSpecRank(v, generalRank) {
+  const max = Math.max(0, generalRank - 1);
+  const n = Math.round(Number(v));
+  if (Number.isNaN(n)) return 0;
+  return Math.min(max, Math.max(0, n));
+}
+
 export function allocateStats(budget, priorities) {
   const values = Object.fromEntries(STAT_NAMES.map(s => [s, 1]));
   let remaining = budget;
