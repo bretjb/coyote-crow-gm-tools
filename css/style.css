@@ -50,6 +50,8 @@ main { flex: 1; overflow: auto; }
 .tab-panel { padding: 1rem; }
 .tab-panel.hidden { display: none; }
 
+.hidden { display: none !important; }
+
 button {
   background: var(--accent);
   color: var(--bg);
@@ -161,6 +163,9 @@ input, select, textarea {
 .skill-table-pair { display: flex; gap: 0; margin-bottom: 0.75rem; }
 .skill-table-pair .skill-table-wrap { flex: 1 1 50%; margin-bottom: 0; }
 .skill-rank-input { width: 3rem; text-align: center; }
+.add-spec-wrap { display: inline-flex; align-items: center; gap: 0.3rem; margin-left: 0.3rem; }
+.add-spec-picker { display: inline-flex; align-items: center; gap: 0.3rem; }
+.add-spec-btn { font-size: 0.72rem; padding: 0.1rem 0.35rem; }
 
 @media (max-width: 767.98px) {
   .skill-table-pair { flex-direction: column; }
