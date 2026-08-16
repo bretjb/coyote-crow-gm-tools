@@ -208,7 +208,12 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
   color: var(--danger);
 }
 
-.skill-table-wrap { overflow-x: auto; margin-bottom: 0.75rem; }
+.skill-table-wrap {
+  overflow-x: auto;
+  margin-bottom: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
 
 .skill-table {
   width: 100%;
@@ -219,31 +224,42 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 
 .skill-table th {
   text-align: left;
-  padding: 0.3rem 0.5rem;
-  color: var(--muted);
-  border-bottom: 1px solid var(--border);
+  padding: 0.45rem 0.5rem;
+  background: var(--surface-raised);
+  color: var(--text);
+  border-bottom: 2px solid var(--accent-copper);
   font-size: 0.72rem;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
   font-style: normal;
 }
 
-.skill-table td { padding: 0.25rem 0.5rem; border-bottom: 1px solid var(--border); }
+.skill-table td { padding: 0.4rem 0.5rem; border-bottom: 1px solid var(--border); }
+.skill-table tbody tr:nth-child(even) td { background: var(--surface-raised); }
 .skill-table tbody tr:last-child td { border-bottom: none; }
 .skill-table tbody tr { cursor: pointer; }
 .skill-table tbody tr:hover td { background: var(--bg); }
 .skill-table tr.unranked td { color: var(--muted); }
+.skill-table td:nth-child(1),
+.skill-table th:nth-child(1) { border-right: 1px solid var(--border); }
 .skill-table td:nth-child(3),
 .skill-table td:nth-child(4),
 .skill-table th:nth-child(3),
 .skill-table th:nth-child(4) { text-align: center; width: 3rem; }
 
-.stat-table-wrap { overflow-x: auto; margin-bottom: 0.75rem; }
+.stat-table-wrap {
+  overflow-x: auto;
+  margin-bottom: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
 .stat-table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
-.stat-table td { padding: 0.35rem 0.5rem; border: 1px solid var(--border); text-align: center; vertical-align: top; }
+.stat-table td { padding: 0.5rem 0.5rem; border: 1px solid var(--border); text-align: center; vertical-align: top; }
+.stat-table tbody tr:nth-child(even) td { background: var(--surface-raised); }
 .stat-input { width: 3rem; text-align: center; }
 
-.skill-table-pair { display: flex; gap: 0; margin-bottom: 0.75rem; }
+.skill-table-pair { display: flex; gap: 0.75rem; margin-bottom: 0.75rem; }
 .skill-table-pair .skill-table-wrap { flex: 1 1 50%; margin-bottom: 0; }
 .skill-rank-input { width: 3rem; text-align: center; }
 .add-spec-wrap { display: inline-flex; align-items: center; gap: 0.3rem; margin-left: 0.3rem; }
