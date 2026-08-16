@@ -40,6 +40,11 @@ export function getAll() {
   return state.npcs.map(n => ({ ...n, data: JSON.parse(JSON.stringify(n.data)), tags: [...(n.tags || [])] }));
 }
 
+export function getById(id) {
+  const entry = state.npcs.find(n => n.id === id);
+  return entry ? { ...entry, data: JSON.parse(JSON.stringify(entry.data)) } : null;
+}
+
 function normalizeTags(tags) {
   return Array.isArray(tags) ? [...new Set(tags.map(t => String(t).trim()).filter(Boolean))] : [];
 }

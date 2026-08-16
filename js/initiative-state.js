@@ -23,7 +23,14 @@ function load() {
     const parsed = JSON.parse(raw);
     const slots = emptySlots();
     for (let i = 1; i <= SLOT_COUNT; i++) {
-      if (Array.isArray(parsed.slots?.[i])) slots[i] = parsed.slots[i];
+      if (Array.isArray(parsed.slots?.[i])) {
+        slots[i] = parsed.slots[i].map(c => ({
+          id: c.id,
+          name: c.name,
+          sourceKind: c.sourceKind === 'npc' || c.sourceKind === 'pc' ? c.sourceKind : null,
+          sourceId: typeof c.sourceId === 'string' ? c.sourceId : null,
+        }));
+      }
     }
     const currentStep = clampSlot(parsed.currentStep, SLOT_COUNT);
     return { slots, currentStep };
@@ -52,10 +59,12 @@ export function getState() {
   return { slots, currentStep: state.currentStep };
 }
 
-export function addCombatant(name, slot) {
+export function addCombatant(name, slot, source) {
   const clamped = clampSlot(slot);
   const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-  state.slots[clamped].push({ id, name });
+  const sourceKind = source && (source.kind === 'npc' || source.kind === 'pc') ? source.kind : null;
+  const sourceId = sourceKind && typeof source.id === 'string' ? source.id : null;
+  state.slots[clamped].push({ id, name, sourceKind, sourceId });
   notify();
 }
 

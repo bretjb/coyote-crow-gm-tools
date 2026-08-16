@@ -36,6 +36,11 @@ export function getAll() {
   return state.pcs.map(p => ({ ...p, data: JSON.parse(JSON.stringify(p.data)) }));
 }
 
+export function getById(id) {
+  const entry = state.pcs.find(p => p.id === id);
+  return entry ? { ...entry, data: JSON.parse(JSON.stringify(entry.data)) } : null;
+}
+
 export function savePc({ data, note }) {
   const id = generateId();
   state.pcs.push({ id, data: JSON.parse(JSON.stringify(data)), note: note || '', savedAt: Date.now(), deleted: false });
