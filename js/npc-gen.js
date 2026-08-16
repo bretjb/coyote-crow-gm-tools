@@ -3,7 +3,7 @@ import { allocateStats, calcDerivedStats, allocateSkills, selectGiftsBurdens, se
 import { rollDice, countSuccesses } from './dice.js';
 import { addCombatant } from './initiative-state.js';
 import { saveNpc, updateNpc, getAll, removeNpc, undoRemove, subscribe, exportAll, importMerge } from './npc-storage.js';
-import { loadGlossary, makeTooltip } from './npc-tooltip.js';
+import { loadGlossary, makeTooltip } from './tooltip.js';
 import { createAvatar } from './lib/dicebear/core.js';
 import * as adventurer from './lib/dicebear/adventurer.js';
 import { buildNpcSheetPdf } from './npc-pdf-export.js';
