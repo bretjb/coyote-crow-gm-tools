@@ -232,10 +232,21 @@ const STAT_ABBR = {
 };
 const DEFENSE_ABBR = { 'Physical Defence': 'PD', 'Mental Defence': 'MD', 'Mystical Defence': 'SD' };
 
-function statCell(statName, npc, onChange, glossary) {
+function statCell(statName, npc, onChange, glossary, mode) {
   const td = document.createElement('td');
   const label = makeTooltip(STAT_ABBR[statName], glossary.get(statName));
   label.classList.add('stat-cell-label');
+
+  if (mode === 'view') {
+    const value = document.createElement('span');
+    value.className = 'stat-cell-value';
+    value.textContent = npc.stats[statName];
+    td.appendChild(label);
+    td.appendChild(document.createElement('br'));
+    td.appendChild(value);
+    return td;
+  }
+
   const input = document.createElement('input');
   input.type = 'number';
   input.min = '1';
@@ -301,7 +312,7 @@ function currentCell(bodyKey, npc) {
   return td;
 }
 
-function buildStatSection(npc, onChange, glossary) {
+function buildStatSection(npc, onChange, glossary, mode) {
   const wrap = document.createElement('div');
   wrap.className = 'stat-table-wrap';
   const table = document.createElement('table');
@@ -314,9 +325,9 @@ function buildStatSection(npc, onChange, glossary) {
   ];
   for (const [s1, s2, s3, defKey, bodyKey] of rows) {
     const tr = document.createElement('tr');
-    tr.appendChild(statCell(s1, npc, onChange, glossary));
-    tr.appendChild(statCell(s2, npc, onChange, glossary));
-    tr.appendChild(statCell(s3, npc, onChange, glossary));
+    tr.appendChild(statCell(s1, npc, onChange, glossary, mode));
+    tr.appendChild(statCell(s2, npc, onChange, glossary, mode));
+    tr.appendChild(statCell(s3, npc, onChange, glossary, mode));
     tr.appendChild(readOnlyCell(DEFENSE_ABBR[defKey], npc.derived[defKey]));
     tr.appendChild(readOnlyCell(bodyKey, npc.derived[bodyKey]));
     tr.appendChild(currentCell(bodyKey, npc));
@@ -518,7 +529,7 @@ function renderFullCard(npc, ctx, savedEntry, mode = 'view') {
 
   function rebuildBody() {
     statSectionEl.innerHTML = '';
-    statSectionEl.appendChild(buildStatSection(npc, rebuildBody, ctx.glossary));
+    statSectionEl.appendChild(buildStatSection(npc, rebuildBody, ctx.glossary, mode));
     skillSectionEl.innerHTML = '';
     skillSectionEl.appendChild(buildSkillSection(npc, ctx.allSkills, rebuildBody, ctx.glossary));
     rollResult.innerHTML = '';
