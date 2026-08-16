@@ -152,6 +152,12 @@ function generateFullNpc({ nameData, motivations, paths, giftsAndBurdens, allSki
   return {
     name: generateName(nameData),
     avatarSeed: generateAvatarSeed(),
+    voice: {
+      pace: pick(VOICE_PACE),
+      volume: pick(VOICE_VOLUME),
+      pitch: pick(VOICE_PITCH),
+      formality: pick(VOICE_FORMALITY),
+    },
     motivation: pick(motivations),
     archetype: archetype.name,
     archetypeStatBonus: archetype.statBonus,
@@ -188,6 +194,17 @@ function ensureCurrent(npc) {
 function ensureAvatarSeed(npc) {
   if (!npc.avatarSeed) {
     npc.avatarSeed = generateAvatarSeed();
+  }
+}
+
+function ensureVoice(npc) {
+  if (!npc.voice) {
+    npc.voice = {
+      pace: pick(VOICE_PACE),
+      volume: pick(VOICE_VOLUME),
+      pitch: pick(VOICE_PITCH),
+      formality: pick(VOICE_FORMALITY),
+    };
   }
 }
 
@@ -248,6 +265,10 @@ const STAT_ABBR = {
   Spirit: 'SPI', Charisma: 'CHA', Will: 'WILL',
 };
 const DEFENSE_ABBR = { 'Physical Defence': 'PD', 'Mental Defence': 'MD', 'Mystical Defence': 'SD' };
+const VOICE_PACE = ['Fast', 'Measured', 'Slow'];
+const VOICE_VOLUME = ['Loud', 'Normal', 'Quiet'];
+const VOICE_PITCH = ['High', 'Mid', 'Low'];
+const VOICE_FORMALITY = ['Formal', 'Casual', 'Blunt'];
 
 function statCell(statName, npc, onChange, glossary, mode) {
   const td = document.createElement('td');
@@ -373,6 +394,7 @@ function renderQuickCard(npc, savedEntry) {
 function renderFullCard(npc, ctx, savedEntry, mode = 'view') {
   ensureCurrent(npc);
   ensureAvatarSeed(npc);
+  ensureVoice(npc);
   const card = document.createElement('div');
   card.className = 'card';
   card.classList.toggle('is-editing', mode === 'edit');
@@ -389,6 +411,8 @@ function renderFullCard(npc, ctx, savedEntry, mode = 'view') {
     </div>
     <div id="archetype-section" class="mb-0-5"></div>
     <div id="demographics-section" class="row-flex-wrap mb-0-5"></div>
+    <h3 class="h3-section">Voice</h3>
+    <div id="voice-section" class="row-flex-wrap mb-0-5"></div>
     <div id="motivation-section" class="mb-0-75"></div>
     <div id="path-section" class="mb-0-5"></div>
     <p class="mb-0-75"><strong>Gifts/Burdens:</strong> ${esc(gb)}</p>
@@ -532,6 +556,28 @@ function renderFullCard(npc, ctx, savedEntry, mode = 'view') {
   demoSectionEl.appendChild(ageField.el);
   demoSectionEl.appendChild(genderField.el);
   demoSectionEl.appendChild(sexualityField.el);
+
+  const voiceSectionEl = card.querySelector('#voice-section');
+  const paceField = buildSelectCustomField({
+    label: 'Pace', value: npc.voice.pace, options: VOICE_PACE,
+    onChange: v => { npc.voice.pace = v; }, mode,
+  });
+  const volumeField = buildSelectCustomField({
+    label: 'Volume', value: npc.voice.volume, options: VOICE_VOLUME,
+    onChange: v => { npc.voice.volume = v; }, mode,
+  });
+  const pitchField = buildSelectCustomField({
+    label: 'Pitch', value: npc.voice.pitch, options: VOICE_PITCH,
+    onChange: v => { npc.voice.pitch = v; }, mode,
+  });
+  const formalityField = buildSelectCustomField({
+    label: 'Formality', value: npc.voice.formality, options: VOICE_FORMALITY,
+    onChange: v => { npc.voice.formality = v; }, mode,
+  });
+  voiceSectionEl.appendChild(paceField.el);
+  voiceSectionEl.appendChild(volumeField.el);
+  voiceSectionEl.appendChild(pitchField.el);
+  voiceSectionEl.appendChild(formalityField.el);
 
   card.querySelector('#motivation-section').appendChild(
     buildNamedDescField({
@@ -1211,5 +1257,8 @@ function npcToText(npc) {
   const pathLine = npc.path.statBonuses.length
     ? `Path: ${npc.path.name} (+1 ${npc.path.statBonuses.join(', +1 ')})`
     : `Path: ${npc.path.name}`;
-  return `${npc.name}\n${npc.archetype} (+1 ${npc.archetypeStatBonus}, free: ${npc.freeSkill}) · ${npc.age} · ${npc.gender} · ${npc.sexuality}\nMotivation: ${npc.motivation.name}\n${pathLine}\nGifts/Burdens: ${gb}\n\nStats:\n${stats}\n\nDerived:\n${derived}${current}\n\nSkills:\n${skills}\n\nAbility: ${npc.ability.name} — ${npc.ability.description}`;
+  const voiceLine = npc.voice
+    ? `Voice: ${npc.voice.pace}, ${npc.voice.volume}, ${npc.voice.pitch} pitch, ${npc.voice.formality}\n`
+    : '';
+  return `${npc.name}\n${npc.archetype} (+1 ${npc.archetypeStatBonus}, free: ${npc.freeSkill}) · ${npc.age} · ${npc.gender} · ${npc.sexuality}\n${voiceLine}Motivation: ${npc.motivation.name}\n${pathLine}\nGifts/Burdens: ${gb}\n\nStats:\n${stats}\n\nDerived:\n${derived}${current}\n\nSkills:\n${skills}\n\nAbility: ${npc.ability.name} — ${npc.ability.description}`;
 }
