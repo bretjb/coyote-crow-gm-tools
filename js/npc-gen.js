@@ -48,6 +48,7 @@ export async function init(container) {
         <input id="npc-import-file" type="file" accept="application/json" style="display:none;">
         <span id="npc-import-status" style="color:var(--muted);font-size:0.85rem;"></span>
       </div>
+      <input id="npc-search" type="text" class="search-input mb-0-75" placeholder="Search by name or tag...">
       <div id="npc-saved-list"></div>
     </div>
   `;
@@ -80,10 +81,17 @@ export async function init(container) {
 
   const output = container.querySelector('#npc-output');
   const savedListEl = container.querySelector('#npc-saved-list');
+  const searchInput = container.querySelector('#npc-search');
   const glossary = new Map(glossaryList.map(g => [g.name, g.description]));
   const ctx = { nameData, components, motivations, paths, giftsAndBurdens, allSkills, abilities, archetypes, glossary, quirks };
-  renderSavedList(savedListEl, output, ctx);
-  subscribe(() => renderSavedList(savedListEl, output, ctx));
+
+  let searchQuery = '';
+  renderSavedList(savedListEl, output, ctx, searchQuery);
+  subscribe(() => renderSavedList(savedListEl, output, ctx, searchQuery));
+  searchInput.addEventListener('input', () => {
+    searchQuery = searchInput.value.trim().toLowerCase();
+    renderSavedList(savedListEl, output, ctx, searchQuery);
+  });
 
   container.querySelector('#npc-export-all').addEventListener('click', () => {
     const json = exportAll();
@@ -1249,11 +1257,20 @@ function appendInitiativeBtn(card, getName, getSuggestedSlot) {
   card.appendChild(wrap);
 }
 
-function renderSavedList(listEl, output, ctx) {
-  const entries = getAll();
+function renderSavedList(listEl, output, ctx, query = '') {
+  const allEntries = getAll();
+  const entries = query
+    ? allEntries.filter(entry => {
+        const name = (entry.data?.name || '').toLowerCase();
+        const tags = (entry.tags || []).map(t => t.toLowerCase());
+        return name.includes(query) || tags.some(t => t.includes(query));
+      })
+    : allEntries;
   listEl.innerHTML = '';
   if (entries.length === 0) {
-    listEl.innerHTML = '<p style="color:var(--muted);font-size:0.85rem;">No saved NPCs yet.</p>';
+    listEl.innerHTML = query
+      ? '<p style="color:var(--muted);font-size:0.85rem;">No saved NPCs match your search.</p>'
+      : '<p style="color:var(--muted);font-size:0.85rem;">No saved NPCs yet.</p>';
     return;
   }
   entries.forEach(entry => {

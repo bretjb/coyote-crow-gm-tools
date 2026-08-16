@@ -450,3 +450,4 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 }
 .tag-chip-remove:hover { color: var(--danger); opacity: 1; }
 .tag-input { width: 100%; }
+.search-input { display: block; width: 100%; }
