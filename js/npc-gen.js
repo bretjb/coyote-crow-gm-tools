@@ -6,6 +6,7 @@ import { saveNpc, updateNpc, getAll, removeNpc, undoRemove, subscribe, exportAll
 import { loadGlossary, makeTooltip } from './npc-tooltip.js';
 import { createAvatar } from './lib/dicebear/core.js';
 import * as adventurer from './lib/dicebear/adventurer.js';
+import { buildNpcSheetPdf } from './npc-pdf-export.js';
 
 async function loadJson(path) {
   const res = await fetch(path);
@@ -730,6 +731,7 @@ function renderFullCard(npc, ctx, savedEntry, mode = 'view') {
 
   appendCopyBtn(card, () => npcToText(npc));
   appendInitiativeBtn(card, () => npc.name, () => Math.min(12, Math.max(1, npc.derived.Initiative)));
+  appendExportPdfBtn(card, npc, ctx.allSkills);
   saveControls = appendSaveControls(card, 'full', npc, savedEntry);
   return card;
 }
@@ -1253,6 +1255,47 @@ function appendInitiativeBtn(card, getName, getSuggestedSlot) {
   wrap.appendChild(btn);
   wrap.appendChild(input);
   wrap.appendChild(confirmBtn);
+  wrap.appendChild(status);
+  card.appendChild(wrap);
+}
+
+function slugify(name) {
+  const s = String(name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  return s || 'npc';
+}
+
+function appendExportPdfBtn(card, npc, allSkills) {
+  const wrap = document.createElement('span');
+  wrap.className = 'inline-actions';
+
+  const btn = document.createElement('button');
+  btn.textContent = 'Export PDF';
+  btn.className = 'secondary mt-0-5';
+
+  const status = document.createElement('span');
+  status.className = 'text-muted-sm';
+
+  btn.addEventListener('click', async () => {
+    btn.disabled = true;
+    status.textContent = 'Exporting...';
+    try {
+      const pdfBytes = await buildNpcSheetPdf(npc, allSkills);
+      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${slugify(npc.name)}-character-sheet.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+      status.textContent = 'PDF downloaded';
+    } catch {
+      status.textContent = 'Export failed — please try again';
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  wrap.appendChild(btn);
   wrap.appendChild(status);
   card.appendChild(wrap);
 }
