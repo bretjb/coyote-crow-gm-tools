@@ -132,6 +132,10 @@ export function clearAll() {
   notify();
 }
 
+export function canUndo() {
+  return clearStash !== null;
+}
+
 export function undoClearAll() {
   if (!clearStash) return;
   state = clearStash;

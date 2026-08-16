@@ -1,5 +1,5 @@
 // js/initiative.js
-import { getState, addCombatant, removeCombatant, moveCombatant, nextStep, prevStep, clearAll, undoClearAll, subscribe } from './initiative-state.js';
+import { getState, addCombatant, removeCombatant, moveCombatant, nextStep, prevStep, clearAll, undoClearAll, canUndo, subscribe } from './initiative-state.js';
 import { esc } from './character-card.js';
 import { getById as getNpcById, updateNpc } from './npc-storage.js';
 import { getById as getPcById, updatePc } from './pc-storage.js';
@@ -146,7 +146,6 @@ export async function init(container) {
   const undoBtn = container.querySelector('#init-undo');
   const currentWrapEl = container.querySelector('#init-current-wrap');
   let dragHighlightRow = null;
-  let showUndo = false;
 
   let skillDefsByName = new Map();
   try {
@@ -176,7 +175,7 @@ export async function init(container) {
   function render() {
     const { slots, currentStep, round } = getState();
     roundEl.textContent = `Round ${round}`;
-    undoBtn.classList.toggle('hidden', !showUndo);
+    undoBtn.classList.toggle('hidden', !canUndo());
     renderCurrentCard(slots[currentStep]);
     slotsEl.innerHTML = Array.from({ length: 12 }, (_, i) => i + 1).map(slotNum => {
       const combatants = slots[slotNum];
@@ -206,7 +205,6 @@ export async function init(container) {
     const name = container.querySelector('#init-name').value.trim();
     const slot = parseInt(container.querySelector('#init-slot').value, 10);
     if (!name || isNaN(slot) || slot < 1 || slot > 12) return;
-    showUndo = false;
     addCombatant(name, slot);
     e.target.reset();
   });
@@ -215,7 +213,6 @@ export async function init(container) {
     const removeBtn = e.target.closest('.init-remove');
     if (!removeBtn) return;
     const chip = removeBtn.closest('.init-chip');
-    showUndo = false;
     removeCombatant(chip.dataset.id);
   });
 
@@ -225,7 +222,6 @@ export async function init(container) {
     const newSlot = parseInt(moveInput.value, 10);
     if (isNaN(newSlot) || newSlot < 1 || newSlot > 12) return;
     const chip = moveInput.closest('.init-chip');
-    showUndo = false;
     moveCombatant(chip.dataset.id, newSlot);
   });
 
@@ -295,7 +291,6 @@ export async function init(container) {
 
       if (row) {
         const newSlot = parseInt(row.dataset.slot, 10);
-        showUndo = false;
         moveCombatant(chipId, newSlot);
         // moveCombatant's state change triggers render(), which replaces
         // #init-slots' contents wholesale — the dragged chip node (and its
@@ -322,10 +317,10 @@ export async function init(container) {
     handle.addEventListener('pointercancel', onCancel);
   });
 
-  container.querySelector('#init-next').addEventListener('click', () => { showUndo = false; nextStep(); });
-  container.querySelector('#init-prev').addEventListener('click', () => { showUndo = false; prevStep(); });
-  container.querySelector('#init-clear').addEventListener('click', () => { showUndo = true; clearAll(); });
-  container.querySelector('#init-undo').addEventListener('click', () => { showUndo = false; undoClearAll(); });
+  container.querySelector('#init-next').addEventListener('click', () => nextStep());
+  container.querySelector('#init-prev').addEventListener('click', () => prevStep());
+  container.querySelector('#init-clear').addEventListener('click', () => clearAll());
+  container.querySelector('#init-undo').addEventListener('click', () => undoClearAll());
 
   subscribe(render);
   render();
