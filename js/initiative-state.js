@@ -67,6 +67,7 @@ export function addCombatant(name, slot, source) {
   const sourceKind = source && (source.kind === 'npc' || source.kind === 'pc') ? source.kind : null;
   const sourceId = sourceKind && typeof source.id === 'string' ? source.id : null;
   state.slots[clamped].push({ id, name, sourceKind, sourceId });
+  clearStash = null;
   notify();
 }
 
@@ -74,6 +75,7 @@ export function removeCombatant(id) {
   for (let i = 1; i <= SLOT_COUNT; i++) {
     state.slots[i] = state.slots[i].filter(c => c.id !== id);
   }
+  clearStash = null;
   notify();
 }
 
@@ -90,6 +92,7 @@ export function moveCombatant(id, newSlot) {
   }
   if (found) {
     state.slots[clamped].push(found);
+    clearStash = null;
     notify();
   }
 }
@@ -106,6 +109,7 @@ export function nextStep() {
     step = step === 1 ? SLOT_COUNT : step - 1;
     if (state.slots[step].length > 0) {
       state.currentStep = step;
+      clearStash = null;
       notify();
       return;
     }
@@ -120,6 +124,7 @@ export function prevStep() {
     step = step === SLOT_COUNT ? 1 : step + 1;
     if (state.slots[step].length > 0) {
       state.currentStep = step;
+      clearStash = null;
       notify();
       return;
     }
