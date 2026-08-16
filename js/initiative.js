@@ -32,14 +32,17 @@ export async function init(container) {
     slotsEl.innerHTML = Array.from({ length: 12 }, (_, i) => i + 1).map(slotNum => {
       const combatants = slots[slotNum];
       const isCurrent = slotNum === currentStep;
-      const chips = combatants.map(c => `
-        <span class="init-chip" data-id="${c.id}">
+      const chips = combatants.map(c => {
+        const sourceClass = c.sourceKind === 'npc' ? 'source-npc' : c.sourceKind === 'pc' ? 'source-pc' : 'source-none';
+        return `
+        <span class="init-chip ${sourceClass}" data-id="${c.id}">
           <span class="init-drag-handle">⠿</span>
           <span>${c.name}</span>
           <input type="number" class="init-move init-move-input" min="1" max="12" placeholder="→">
           <button type="button" class="init-remove secondary">×</button>
         </span>
-      `).join('');
+      `;
+      }).join('');
       return `
         <div class="card init-slot-row${isCurrent ? ' current' : ''}" data-slot="${slotNum}">
           <span class="init-slot-num">${isCurrent ? '▶ ' : ''}${slotNum}</span>

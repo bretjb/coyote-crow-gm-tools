@@ -328,6 +328,10 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 .init-move-input { width: 3rem; }
 .init-remove { padding: 0.1rem 0.4rem; }
 
+.init-chip.source-npc { border-color: var(--accent-copper); }
+.init-chip.source-pc { border-color: var(--accent-purple); }
+.init-chip.source-none { border-color: var(--muted); }
+
 .mt-1-5 { margin-top: 1.5rem; }
 .flex-1 { flex: 1; }
 .text-left { text-align: left; }
