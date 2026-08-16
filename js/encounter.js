@@ -1,6 +1,7 @@
 // js/encounter.js
 import { getAll as getAllNpcs, subscribe as subscribeNpcs } from './npc-storage.js';
 import { getAll as getAllPcs, subscribe as subscribePcs } from './pc-storage.js';
+import { clearAll, addCombatant } from './initiative-state.js';
 
 function matchesQuery(entry, query) {
   if (!query) return true;
@@ -102,5 +103,25 @@ export async function init(container) {
   pcSearchInput.addEventListener('input', () => {
     pcQuery = pcSearchInput.value.trim().toLowerCase();
     refreshPcList();
+  });
+
+  function suggestedSlot(entry) {
+    return Math.min(12, Math.max(1, entry.data.derived.Initiative));
+  }
+
+  generateBtn.addEventListener('click', () => {
+    clearAll();
+
+    for (const entry of getFullNpcEntries()) {
+      if (!checkedNpcIds.has(entry.id)) continue;
+      addCombatant(entry.data.name, suggestedSlot(entry), { kind: 'npc', id: entry.id });
+    }
+
+    for (const entry of getPcEntries()) {
+      if (!checkedPcIds.has(entry.id)) continue;
+      addCombatant(entry.data.name, suggestedSlot(entry), { kind: 'pc', id: entry.id });
+    }
+
+    document.querySelector('[data-tab="initiative"]').click();
   });
 }
