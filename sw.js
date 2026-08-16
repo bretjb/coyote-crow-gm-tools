@@ -1,4 +1,4 @@
-const CACHE = 'cc-gm-v16';
+const CACHE = 'cc-gm-v17';
 
 const ASSETS = [
   './',
@@ -14,6 +14,8 @@ const ASSETS = [
   './js/npc-character-gen.js',
   './js/npc-storage.js',
   './js/npc-tooltip.js',
+  './js/npc-pdf-export.js',
+  './js/lib/pdf-lib.esm.min.js',
   './js/initiative.js',
   './js/initiative-state.js',
   './js/dice-roller.js',
@@ -32,6 +34,7 @@ const ASSETS = [
   './data/archetypes.json',
   './data/quirks.json',
   './data/stat-skill-glossary.json',
+  './CoyoteCrowCharacterSheet-v1.01.pdf',
   './data/rules/quick-ref.md',
   './data/rules/full-digest.md',
   './icon.svg',
