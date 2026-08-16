@@ -425,3 +425,6 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
   0%, 100% { text-shadow: 0 0 0 transparent; }
   50% { text-shadow: 0 0 8px var(--accent-purple); }
 }
+
+.npc-avatar svg { display: block; width: 3.5rem; height: 3.5rem; border-radius: 50%; border: 1px solid var(--border); background: var(--surface-raised); }
+.npc-avatar-thumb svg { display: block; width: 1.75rem; height: 1.75rem; border-radius: 50%; border: 1px solid var(--border); background: var(--surface-raised); }

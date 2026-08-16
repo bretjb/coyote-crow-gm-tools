@@ -4,6 +4,8 @@ import { rollDice, countSuccesses } from './dice.js';
 import { addCombatant } from './initiative-state.js';
 import { saveNpc, updateNpc, getAll, removeNpc, undoRemove, subscribe, exportAll, importMerge } from './npc-storage.js';
 import { loadGlossary, makeTooltip } from './npc-tooltip.js';
+import { createAvatar } from './lib/dicebear/core.js';
+import * as adventurer from './lib/dicebear/adventurer.js';
 
 async function loadJson(path) {
   const res = await fetch(path);
@@ -19,6 +21,14 @@ function esc(s) {
   const div = document.createElement('div');
   div.textContent = String(s);
   return div.innerHTML;
+}
+
+function generateAvatarSeed() {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function renderAvatarSvg(seed, size) {
+  return createAvatar(adventurer, { seed, size }).toString();
 }
 
 export async function init(container) {
@@ -141,6 +151,7 @@ function generateFullNpc({ nameData, motivations, paths, giftsAndBurdens, allSki
   const derived = calcDerivedStats(stats);
   return {
     name: generateName(nameData),
+    avatarSeed: generateAvatarSeed(),
     motivation: pick(motivations),
     archetype: archetype.name,
     archetypeStatBonus: archetype.statBonus,
@@ -171,6 +182,12 @@ function weightedPickDemographic(options) {
 function ensureCurrent(npc) {
   if (!npc.current) {
     npc.current = { Body: npc.derived.Body, Mind: npc.derived.Mind, Soul: npc.derived.Soul };
+  }
+}
+
+function ensureAvatarSeed(npc) {
+  if (!npc.avatarSeed) {
+    npc.avatarSeed = generateAvatarSeed();
   }
 }
 
@@ -355,6 +372,7 @@ function renderQuickCard(npc, savedEntry) {
 
 function renderFullCard(npc, ctx, savedEntry, mode = 'view') {
   ensureCurrent(npc);
+  ensureAvatarSeed(npc);
   const card = document.createElement('div');
   card.className = 'card';
   card.classList.toggle('is-editing', mode === 'edit');
@@ -365,7 +383,10 @@ function renderFullCard(npc, ctx, savedEntry, mode = 'view') {
 
   card.innerHTML = `
     <div id="edit-toggle" class="row-flex-wrap mb-0-5"></div>
-    <div id="name-section" class="row-flex-wrap mb-0-5"></div>
+    <div class="row-flex-wrap mb-0-5">
+      <div id="avatar-section" class="npc-avatar"></div>
+      <div id="name-section" class="row-flex-wrap flex-1"></div>
+    </div>
     <div id="archetype-section" class="mb-0-5"></div>
     <div id="demographics-section" class="row-flex-wrap mb-0-5"></div>
     <div id="motivation-section" class="mb-0-75"></div>
@@ -410,6 +431,9 @@ function renderFullCard(npc, ctx, savedEntry, mode = 'view') {
     toggleEl.appendChild(saveModeBtn);
   }
 
+  const avatarSectionEl = card.querySelector('#avatar-section');
+  avatarSectionEl.innerHTML = renderAvatarSvg(npc.avatarSeed, 64);
+
   const nameSectionEl = card.querySelector('#name-section');
   if (mode === 'view') {
     const nameDisplay = document.createElement('span');
@@ -433,8 +457,16 @@ function renderFullCard(npc, ctx, savedEntry, mode = 'view') {
       npc.name = generateName(ctx.nameData);
       nameInput.value = npc.name;
     });
+    const regenAvatarBtn = document.createElement('button');
+    regenAvatarBtn.textContent = 'Regenerate Avatar';
+    regenAvatarBtn.className = 'secondary';
+    regenAvatarBtn.addEventListener('click', () => {
+      npc.avatarSeed = generateAvatarSeed();
+      avatarSectionEl.innerHTML = renderAvatarSvg(npc.avatarSeed, 64);
+    });
     nameSectionEl.appendChild(nameInput);
     nameSectionEl.appendChild(regenBtn);
+    nameSectionEl.appendChild(regenAvatarBtn);
   }
 
   const archetypeSectionEl = card.querySelector('#archetype-section');
@@ -1125,6 +1157,14 @@ function renderSavedList(listEl, output, ctx) {
       row.appendChild(span);
       row.appendChild(undoBtn);
     } else {
+      if (entry.kind === 'full') {
+        const thumbSeed = entry.data?.avatarSeed || entry.id;
+        const thumb = document.createElement('span');
+        thumb.className = 'npc-avatar-thumb';
+        thumb.innerHTML = renderAvatarSvg(thumbSeed, 28);
+        row.appendChild(thumb);
+      }
+
       const nameBtn = document.createElement('button');
       nameBtn.textContent = entry.data?.name || '(unnamed)';
       nameBtn.className = 'secondary';
