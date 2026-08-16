@@ -322,6 +322,7 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 
 .save-controls-wrap { margin-top: 0.75rem; }
 .field-label { display: block; color: var(--muted); font-size: 0.8rem; margin-bottom: 0.25rem; }
+.field-value { color: var(--text); font-weight: 500; }
 
 .tooltip-trigger { position: relative; display: inline-block; cursor: help; border-bottom: 1px dotted var(--muted); }
 .tooltip-bubble {

@@ -259,6 +259,27 @@ function readOnlyCell(label, value) {
   return td;
 }
 
+function readOnlyField(label, value) {
+  const el = document.createElement('div');
+  el.className = 'row-flex-wrap mb-0-5';
+  el.innerHTML = `<span class="field-label">${esc(label)}</span><span class="field-value">${esc(value)}</span>`;
+  return el;
+}
+
+function readOnlyNamedField(label, current, formatExtra) {
+  const el = document.createElement('div');
+  el.className = 'mb-0-75';
+  const row = document.createElement('div');
+  row.className = 'row-flex-wrap';
+  row.innerHTML = `<span class="field-label">${esc(label)}</span><span class="field-value">${esc(current.name)}</span>`;
+  el.appendChild(row);
+  const desc = document.createElement('p');
+  desc.className = 'text-muted-sm';
+  desc.textContent = (current.description || '') + (formatExtra ? formatExtra(current) : '');
+  el.appendChild(desc);
+  return el;
+}
+
 function currentCell(bodyKey, npc) {
   const td = document.createElement('td');
   const label = document.createElement('span');
@@ -321,18 +342,20 @@ function renderQuickCard(npc, savedEntry) {
   return card;
 }
 
-function renderFullCard(npc, ctx, savedEntry) {
+function renderFullCard(npc, ctx, savedEntry, mode = 'view') {
   ensureCurrent(npc);
   const card = document.createElement('div');
   card.className = 'card';
+  card.classList.toggle('is-editing', mode === 'edit');
 
   const gb = npc.giftsAndBurdens.length > 0
     ? npc.giftsAndBurdens.map(gbLabel).join(', ')
     : 'None';
 
   card.innerHTML = `
+    <div id="edit-toggle" class="row-flex-wrap mb-0-5"></div>
     <div id="name-section" class="row-flex-wrap mb-0-5"></div>
-    <p class="npc-meta" id="archetype-label"></p>
+    <div id="archetype-section" class="mb-0-5"></div>
     <div id="demographics-section" class="row-flex-wrap mb-0-5"></div>
     <div id="motivation-section" class="mb-0-75"></div>
     <div id="path-section" class="mb-0-5"></div>
@@ -349,54 +372,100 @@ function renderFullCard(npc, ctx, savedEntry) {
     <div id="ability-section" class="mb-0-75"></div>
   `;
 
+  function rerender(newMode) {
+    const id = saveControls ? saveControls.getSavedId() : null;
+    const note = saveControls ? saveControls.getNote() : undefined;
+    const entry = id ? { id, note } : savedEntry;
+    const newCard = renderFullCard(npc, ctx, entry, newMode);
+    card.replaceWith(newCard);
+  }
+
+  let saveControls;
+  const toggleEl = card.querySelector('#edit-toggle');
+  if (mode === 'view') {
+    const editBtn = document.createElement('button');
+    editBtn.textContent = 'Edit';
+    editBtn.className = 'secondary';
+    editBtn.addEventListener('click', () => rerender('edit'));
+    toggleEl.appendChild(editBtn);
+  } else {
+    const saveModeBtn = document.createElement('button');
+    saveModeBtn.textContent = 'Save';
+    saveModeBtn.addEventListener('click', () => {
+      const id = saveControls ? saveControls.getSavedId() : null;
+      if (id) updateNpc(id, { data: npc });
+      rerender('view');
+    });
+    toggleEl.appendChild(saveModeBtn);
+  }
+
   const nameSectionEl = card.querySelector('#name-section');
-  const nameInput = document.createElement('input');
-  nameInput.type = 'text';
-  nameInput.className = 'input-name';
-  nameInput.value = npc.name;
-  nameInput.addEventListener('change', () => {
-    const v = nameInput.value.trim();
-    npc.name = v || npc.name;
+  if (mode === 'view') {
+    const nameDisplay = document.createElement('span');
+    nameDisplay.className = 'input-name';
+    nameDisplay.textContent = npc.name;
+    nameSectionEl.appendChild(nameDisplay);
+  } else {
+    const nameInput = document.createElement('input');
+    nameInput.type = 'text';
+    nameInput.className = 'input-name';
     nameInput.value = npc.name;
-  });
-  const regenBtn = document.createElement('button');
-  regenBtn.textContent = 'Regenerate Name';
-  regenBtn.className = 'secondary';
-  regenBtn.addEventListener('click', () => {
-    npc.name = generateName(ctx.nameData);
-    nameInput.value = npc.name;
-  });
-  nameSectionEl.appendChild(nameInput);
-  nameSectionEl.appendChild(regenBtn);
-
-  const archetypeLabelEl = card.querySelector('#archetype-label');
-  const archetypeSelect = document.createElement('select');
-  for (const a of ctx.archetypes) {
-    const o = document.createElement('option');
-    o.value = a.name;
-    o.textContent = a.name;
-    archetypeSelect.appendChild(o);
+    nameInput.addEventListener('change', () => {
+      const v = nameInput.value.trim();
+      npc.name = v || npc.name;
+      nameInput.value = npc.name;
+    });
+    const regenBtn = document.createElement('button');
+    regenBtn.textContent = 'Regenerate Name';
+    regenBtn.className = 'secondary';
+    regenBtn.addEventListener('click', () => {
+      npc.name = generateName(ctx.nameData);
+      nameInput.value = npc.name;
+    });
+    nameSectionEl.appendChild(nameInput);
+    nameSectionEl.appendChild(regenBtn);
   }
-  archetypeSelect.value = npc.archetype;
-  archetypeLabelEl.replaceWith(archetypeSelect);
 
-  const archetypeNote = document.createElement('p');
-  archetypeNote.className = 'npc-meta-sm';
-  archetypeSelect.insertAdjacentElement('afterend', archetypeNote);
-  function refreshArchetypeNote() {
-    archetypeNote.textContent = `+1 ${npc.archetypeStatBonus} · free rank: ${npc.freeSkill}`;
+  const archetypeSectionEl = card.querySelector('#archetype-section');
+  function archetypeNoteText() {
+    return `+1 ${npc.archetypeStatBonus} · free rank: ${npc.freeSkill}`;
   }
-  refreshArchetypeNote();
+  if (mode === 'view') {
+    const p = document.createElement('p');
+    p.className = 'npc-meta';
+    p.textContent = npc.archetype;
+    const note = document.createElement('p');
+    note.className = 'npc-meta-sm';
+    note.textContent = archetypeNoteText();
+    archetypeSectionEl.appendChild(p);
+    archetypeSectionEl.appendChild(note);
+  } else {
+    const archetypeSelect = document.createElement('select');
+    for (const a of ctx.archetypes) {
+      const o = document.createElement('option');
+      o.value = a.name;
+      o.textContent = a.name;
+      archetypeSelect.appendChild(o);
+    }
+    archetypeSelect.value = npc.archetype;
 
-  archetypeSelect.addEventListener('change', () => {
-    const newArchetype = ctx.archetypes.find(a => a.name === archetypeSelect.value);
-    swapArchetype(npc, newArchetype);
-    refreshArchetypeNote();
-    ageField.setOptions(archetypeDemographics('age'), npc.age);
-    genderField.setOptions(archetypeDemographics('gender'), npc.gender);
-    sexualityField.setOptions(archetypeDemographics('sexuality'), npc.sexuality);
-    rebuildBody();
-  });
+    const archetypeNote = document.createElement('p');
+    archetypeNote.className = 'npc-meta-sm';
+    archetypeNote.textContent = archetypeNoteText();
+
+    archetypeSelect.addEventListener('change', () => {
+      const newArchetype = ctx.archetypes.find(a => a.name === archetypeSelect.value);
+      swapArchetype(npc, newArchetype);
+      archetypeNote.textContent = archetypeNoteText();
+      ageField.setOptions(archetypeDemographics('age'), npc.age);
+      genderField.setOptions(archetypeDemographics('gender'), npc.gender);
+      sexualityField.setOptions(archetypeDemographics('sexuality'), npc.sexuality);
+      rebuildBody();
+    });
+
+    archetypeSectionEl.appendChild(archetypeSelect);
+    archetypeSectionEl.appendChild(archetypeNote);
+  }
 
   function archetypeDemographics(key) {
     const def = ctx.archetypes.find(a => a.name === npc.archetype);
@@ -407,15 +476,15 @@ function renderFullCard(npc, ctx, savedEntry) {
   const demoSectionEl = card.querySelector('#demographics-section');
   const ageField = buildSelectCustomField({
     label: 'Age', value: npc.age, options: archetypeDemographics('age'),
-    onChange: v => { npc.age = v; },
+    onChange: v => { npc.age = v; }, mode,
   });
   const genderField = buildSelectCustomField({
     label: 'Gender', value: npc.gender, options: archetypeDemographics('gender'),
-    onChange: v => { npc.gender = v; },
+    onChange: v => { npc.gender = v; }, mode,
   });
   const sexualityField = buildSelectCustomField({
     label: 'Sexuality', value: npc.sexuality, options: archetypeDemographics('sexuality'),
-    onChange: v => { npc.sexuality = v; },
+    onChange: v => { npc.sexuality = v; }, mode,
   });
   demoSectionEl.appendChild(ageField.el);
   demoSectionEl.appendChild(genderField.el);
@@ -427,6 +496,7 @@ function renderFullCard(npc, ctx, savedEntry) {
       current: npc.motivation,
       options: ctx.motivations,
       onChange: v => { npc.motivation = v; },
+      mode,
     }).el
   );
 
@@ -438,6 +508,7 @@ function renderFullCard(npc, ctx, savedEntry) {
       onChange: v => { npc.ability = v; },
       customShape: () => ({ name: '', description: '', diceCheck: [] }),
       formatExtra: c => (c.diceCheck && c.diceCheck.length ? ` [${c.diceCheck.join(' + ')}]` : ''),
+      mode,
     }).el
   );
 
@@ -455,65 +526,78 @@ function renderFullCard(npc, ctx, savedEntry) {
   rebuildBody();
 
   const pathSectionEl = card.querySelector('#path-section');
-  const pathRow = document.createElement('div');
-  pathRow.className = 'row-flex-wrap';
-  const pathLabel = document.createElement('label');
-  pathLabel.textContent = 'Path';
-  pathLabel.className = 'field-label';
-  const pathSelect = document.createElement('select');
-  for (const p of ctx.paths) {
-    const o = document.createElement('option');
-    o.value = p.name;
-    o.textContent = p.name;
-    pathSelect.appendChild(o);
-  }
-  const pathCustomOpt = document.createElement('option');
-  pathCustomOpt.value = '__custom__';
-  pathCustomOpt.textContent = 'Custom...';
-  pathSelect.appendChild(pathCustomOpt);
-
-  const pathCustomInput = document.createElement('input');
-  pathCustomInput.type = 'text';
-  pathCustomInput.className = 'hidden mt-0-5';
-
-  const pathNote = document.createElement('p');
-  pathNote.className = 'text-muted-sm';
-  function refreshPathNote() {
-    pathNote.textContent = npc.path.statBonuses.length ? `(+1 ${npc.path.statBonuses.join(', +1 ')})` : '';
-  }
-
-  if (ctx.paths.some(p => p.name === npc.path.name)) {
-    pathSelect.value = npc.path.name;
+  if (mode === 'view') {
+    const p = document.createElement('p');
+    p.className = 'npc-meta';
+    p.textContent = `Path: ${npc.path.name}`;
+    pathSectionEl.appendChild(p);
+    if (npc.path.statBonuses.length) {
+      const note = document.createElement('p');
+      note.className = 'text-muted-sm';
+      note.textContent = `(+1 ${npc.path.statBonuses.join(', +1 ')})`;
+      pathSectionEl.appendChild(note);
+    }
   } else {
-    pathSelect.value = '__custom__';
-    pathCustomInput.value = npc.path.name;
-    pathCustomInput.classList.remove('hidden');
-  }
-  refreshPathNote();
+    const pathRow = document.createElement('div');
+    pathRow.className = 'row-flex-wrap';
+    const pathLabel = document.createElement('label');
+    pathLabel.textContent = 'Path';
+    pathLabel.className = 'field-label';
+    const pathSelect = document.createElement('select');
+    for (const p of ctx.paths) {
+      const o = document.createElement('option');
+      o.value = p.name;
+      o.textContent = p.name;
+      pathSelect.appendChild(o);
+    }
+    const pathCustomOpt = document.createElement('option');
+    pathCustomOpt.value = '__custom__';
+    pathCustomOpt.textContent = 'Custom...';
+    pathSelect.appendChild(pathCustomOpt);
 
-  pathSelect.addEventListener('change', () => {
-    if (pathSelect.value === '__custom__') {
-      pathCustomInput.classList.remove('hidden');
-      pathCustomInput.value = '';
-      pathCustomInput.focus();
-      swapPath(npc, { name: '', statBonuses: [] });
+    const pathCustomInput = document.createElement('input');
+    pathCustomInput.type = 'text';
+    pathCustomInput.className = 'hidden mt-0-5';
+
+    const pathNote = document.createElement('p');
+    pathNote.className = 'text-muted-sm';
+    function refreshPathNote() {
+      pathNote.textContent = npc.path.statBonuses.length ? `(+1 ${npc.path.statBonuses.join(', +1 ')})` : '';
+    }
+
+    if (ctx.paths.some(p => p.name === npc.path.name)) {
+      pathSelect.value = npc.path.name;
     } else {
-      pathCustomInput.classList.add('hidden');
-      swapPath(npc, ctx.paths.find(p => p.name === pathSelect.value));
+      pathSelect.value = '__custom__';
+      pathCustomInput.value = npc.path.name;
+      pathCustomInput.classList.remove('hidden');
     }
     refreshPathNote();
-    rebuildBody();
-  });
 
-  pathCustomInput.addEventListener('change', () => {
-    npc.path.name = pathCustomInput.value.trim();
-  });
+    pathSelect.addEventListener('change', () => {
+      if (pathSelect.value === '__custom__') {
+        pathCustomInput.classList.remove('hidden');
+        pathCustomInput.value = '';
+        pathCustomInput.focus();
+        swapPath(npc, { name: '', statBonuses: [] });
+      } else {
+        pathCustomInput.classList.add('hidden');
+        swapPath(npc, ctx.paths.find(p => p.name === pathSelect.value));
+      }
+      refreshPathNote();
+      rebuildBody();
+    });
 
-  pathRow.appendChild(pathLabel);
-  pathRow.appendChild(pathSelect);
-  pathSectionEl.appendChild(pathRow);
-  pathSectionEl.appendChild(pathCustomInput);
-  pathSectionEl.appendChild(pathNote);
+    pathCustomInput.addEventListener('change', () => {
+      npc.path.name = pathCustomInput.value.trim();
+    });
+
+    pathRow.appendChild(pathLabel);
+    pathRow.appendChild(pathSelect);
+    pathSectionEl.appendChild(pathRow);
+    pathSectionEl.appendChild(pathCustomInput);
+    pathSectionEl.appendChild(pathNote);
+  }
 
   card.addEventListener('click', e => {
     const row = e.target.closest('tr[data-pool]');
@@ -528,11 +612,14 @@ function renderFullCard(npc, ctx, savedEntry) {
 
   appendCopyBtn(card, () => npcToText(npc));
   appendInitiativeBtn(card, () => npc.name, () => Math.min(12, Math.max(1, npc.derived.Initiative)));
-  appendSaveControls(card, 'full', npc, savedEntry);
+  saveControls = appendSaveControls(card, 'full', npc, savedEntry);
   return card;
 }
 
-function buildSelectCustomField({ label, value, options, onChange }) {
+function buildSelectCustomField({ label, value, options, onChange, mode }) {
+  if (mode === 'view') {
+    return { el: readOnlyField(label, value), setOptions: () => {} };
+  }
   const el = document.createElement('div');
   el.className = 'row-flex-wrap mb-0-5';
 
@@ -593,7 +680,10 @@ function buildSelectCustomField({ label, value, options, onChange }) {
   return { el, setOptions: (opts, currentValue) => populate(opts, currentValue) };
 }
 
-function buildNamedDescField({ label, current, options, onChange, customShape, formatExtra }) {
+function buildNamedDescField({ label, current, options, onChange, customShape, formatExtra, mode }) {
+  if (mode === 'view') {
+    return { el: readOnlyNamedField(label, current, formatExtra) };
+  }
   const el = document.createElement('div');
   el.className = 'mb-0-75';
 
@@ -926,6 +1016,7 @@ function appendSaveControls(card, kind, npc, savedEntry) {
   wrap.appendChild(textarea);
   wrap.appendChild(saveBtn);
   card.appendChild(wrap);
+  return { getSavedId: () => savedId, getNote: () => textarea.value };
 }
 
 function appendCopyBtn(card, getText) {
