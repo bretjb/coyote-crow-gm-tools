@@ -270,8 +270,8 @@ function renderQuickCard(npc, savedEntry) {
     <p><strong>Motivation:</strong> ${esc(npc.motivation)}</p>
   `;
   appendCopyBtn(card, () => `${npc.name}\nRole: ${npc.role}\nPersonality: ${npc.personality}\nMotivation: ${npc.motivation}`);
-  appendInitiativeBtn(card, () => npc.name, null);
-  appendNpcSaveControls(card, 'quick', npc, savedEntry);
+  const quickSaveControls = appendNpcSaveControls(card, 'quick', npc, savedEntry);
+  appendInitiativeBtn(card, () => npc.name, null, 'npc', quickSaveControls.ensureSaved);
   return card;
 }
 
@@ -597,9 +597,9 @@ function renderFullCard(npc, ctx, savedEntry, mode = 'view') {
   });
 
   appendCopyBtn(card, () => npcToText(npc));
-  appendInitiativeBtn(card, () => npc.name, () => Math.min(12, Math.max(1, npc.derived.Initiative)));
   appendExportPdfBtn(card, npc, ctx.allSkills);
   saveControls = appendNpcSaveControls(card, 'full', npc, savedEntry);
+  appendInitiativeBtn(card, () => npc.name, () => Math.min(12, Math.max(1, npc.derived.Initiative)), 'npc', saveControls.ensureSaved);
   return card;
 }
 
@@ -677,7 +677,12 @@ function appendNpcSaveControls(card, kind, npc, savedEntry) {
   controls.wrap.insertBefore(chipsWrap, controls.saveBtn);
   controls.wrap.insertBefore(tagInput, controls.saveBtn);
 
-  return { getSavedId: controls.getSavedId, getNote: controls.getNote, getTags: () => [...tags] };
+  return {
+    getSavedId: controls.getSavedId,
+    getNote: controls.getNote,
+    getTags: () => [...tags],
+    ensureSaved: controls.ensureSaved,
+  };
 }
 
 function slugify(name) {

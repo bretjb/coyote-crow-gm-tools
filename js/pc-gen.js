@@ -293,9 +293,9 @@ function renderPcCard(pc, ctx, savedEntry, mode = 'view') {
   });
 
   appendCopyBtn(card, () => pcToText(pc));
-  appendInitiativeBtn(card, () => pc.name || '(unnamed)', () => Math.min(12, Math.max(1, pc.derived.Initiative)));
   const pcStorage = { save: (data, note) => savePc({ data, note }), update: (id, patch) => updatePc(id, patch) };
   saveControls = appendSaveControls(card, pc, savedEntry, pcStorage);
+  appendInitiativeBtn(card, () => pc.name || '(unnamed)', () => Math.min(12, Math.max(1, pc.derived.Initiative)), 'pc', saveControls.ensureSaved);
   return card;
 }
 

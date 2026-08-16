@@ -516,7 +516,7 @@ export function appendCopyBtn(card, getText) {
   card.appendChild(btn);
 }
 
-export function appendInitiativeBtn(card, getName, getSuggestedSlot) {
+export function appendInitiativeBtn(card, getName, getSuggestedSlot, sourceKind, ensureSaved) {
   const wrap = document.createElement('span');
   wrap.className = 'inline-actions';
 
@@ -552,7 +552,9 @@ export function appendInitiativeBtn(card, getName, getSuggestedSlot) {
       status.textContent = 'Enter a slot 1-12';
       return;
     }
-    addCombatant(getName(), slot);
+    const id = typeof ensureSaved === 'function' ? ensureSaved() : null;
+    const source = sourceKind && id ? { kind: sourceKind, id } : null;
+    addCombatant(getName(), slot, source);
     input.classList.add('hidden');
     confirmBtn.classList.add('hidden');
     status.textContent = `Added to Initiative slot ${slot}`;
@@ -589,6 +591,12 @@ export function appendSaveControls(card, data, savedEntry, storage) {
   let savedId = savedEntry ? savedEntry.id : null;
   saveBtn.textContent = savedId ? 'Saved ✓' : 'Save';
 
+  function doSave() {
+    savedId = storage.save(data, textarea.value);
+    saveBtn.textContent = 'Saved ✓';
+    return savedId;
+  }
+
   let debounceTimer;
   textarea.addEventListener('input', () => {
     if (!savedId) return;
@@ -602,8 +610,7 @@ export function appendSaveControls(card, data, savedEntry, storage) {
     if (savedId) {
       storage.update(savedId, { data, note: textarea.value });
     } else {
-      savedId = storage.save(data, textarea.value);
-      saveBtn.textContent = 'Saved ✓';
+      doSave();
     }
   });
 
@@ -611,5 +618,11 @@ export function appendSaveControls(card, data, savedEntry, storage) {
   wrap.appendChild(textarea);
   wrap.appendChild(saveBtn);
   card.appendChild(wrap);
-  return { getSavedId: () => savedId, getNote: () => textarea.value, wrap, saveBtn };
+  return {
+    getSavedId: () => savedId,
+    getNote: () => textarea.value,
+    ensureSaved: () => (savedId ? savedId : doSave()),
+    wrap,
+    saveBtn,
+  };
 }
