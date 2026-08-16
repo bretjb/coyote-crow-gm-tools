@@ -9,7 +9,11 @@ function load() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return { npcs: [] };
     const parsed = JSON.parse(raw);
-    const npcs = Array.isArray(parsed.npcs) ? parsed.npcs.filter(n => n && !n.deleted) : [];
+    const npcs = Array.isArray(parsed.npcs)
+      ? parsed.npcs
+          .filter(n => n && !n.deleted)
+          .map(n => ({ ...n, tags: Array.isArray(n.tags) ? n.tags.filter(t => typeof t === 'string') : [] }))
+      : [];
     return { npcs };
   } catch {
     return { npcs: [] };
@@ -33,21 +37,34 @@ function generateId() {
 }
 
 export function getAll() {
-  return state.npcs.map(n => ({ ...n, data: JSON.parse(JSON.stringify(n.data)) }));
+  return state.npcs.map(n => ({ ...n, data: JSON.parse(JSON.stringify(n.data)), tags: [...(n.tags || [])] }));
 }
 
-export function saveNpc({ kind, data, note }) {
+function normalizeTags(tags) {
+  return Array.isArray(tags) ? [...new Set(tags.map(t => String(t).trim()).filter(Boolean))] : [];
+}
+
+export function saveNpc({ kind, data, note, tags }) {
   const id = generateId();
-  state.npcs.push({ id, kind, data: JSON.parse(JSON.stringify(data)), note: note || '', savedAt: Date.now(), deleted: false });
+  state.npcs.push({
+    id,
+    kind,
+    data: JSON.parse(JSON.stringify(data)),
+    note: note || '',
+    tags: normalizeTags(tags),
+    savedAt: Date.now(),
+    deleted: false,
+  });
   notify();
   return id;
 }
 
-export function updateNpc(id, { data, note } = {}) {
+export function updateNpc(id, { data, note, tags } = {}) {
   const entry = state.npcs.find(n => n.id === id);
   if (!entry) return;
   if (data !== undefined) entry.data = JSON.parse(JSON.stringify(data));
   if (note !== undefined) entry.note = note;
+  if (tags !== undefined) entry.tags = normalizeTags(tags);
   notify();
 }
 
@@ -83,16 +100,18 @@ export function importMerge(jsonString) {
     if (!item || typeof item !== 'object') continue;
     const { kind, data } = item;
     const note = item.note || '';
+    const tags = normalizeTags(item.tags);
     if (kind !== 'quick' && kind !== 'full') continue;
     if (!data || typeof data !== 'object' || typeof data.name !== 'string') continue;
     const isDuplicate = state.npcs.some(n =>
       !n.deleted &&
       n.kind === kind &&
       n.note === note &&
+      JSON.stringify([...(n.tags || [])].sort()) === JSON.stringify([...tags].sort()) &&
       JSON.stringify(n.data) === JSON.stringify(data)
     );
     if (isDuplicate) continue;
-    state.npcs.push({ id: generateId(), kind, data, note, savedAt: Date.now(), deleted: false });
+    state.npcs.push({ id: generateId(), kind, data, note, tags, savedAt: Date.now(), deleted: false });
     added++;
   }
   if (added > 0) notify();

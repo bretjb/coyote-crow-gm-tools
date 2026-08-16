@@ -441,7 +441,8 @@ function renderFullCard(npc, ctx, savedEntry, mode = 'view') {
   function rerender(newMode) {
     const id = saveControls ? saveControls.getSavedId() : null;
     const note = saveControls ? saveControls.getNote() : undefined;
-    const entry = id ? { id, note } : savedEntry;
+    const tags = saveControls ? saveControls.getTags() : undefined;
+    const entry = id ? { id, note, tags } : savedEntry;
     const newCard = renderFullCard(npc, ctx, entry, newMode);
     card.replaceWith(newCard);
   }
@@ -1093,26 +1094,74 @@ function buildSpecTable(allSkills, npc, specEntries, onChange, glossary, mode) {
 
 function appendSaveControls(card, kind, npc, savedEntry) {
   const wrap = document.createElement('div');
-  wrap.style.marginTop = '0.75rem';
+  wrap.className = 'save-controls-wrap';
 
   const label = document.createElement('label');
   label.textContent = 'Notes';
-  label.style.display = 'block';
-  label.style.color = 'var(--muted)';
-  label.style.fontSize = '0.8rem';
-  label.style.marginBottom = '0.25rem';
+  label.className = 'field-label';
 
   const textarea = document.createElement('textarea');
   textarea.rows = 3;
-  textarea.style.width = '100%';
-  textarea.style.resize = 'vertical';
+  textarea.className = 'textarea-full';
   textarea.value = savedEntry ? savedEntry.note : '';
 
-  const saveBtn = document.createElement('button');
-  saveBtn.className = 'secondary';
-  saveBtn.style.marginTop = '0.5rem';
-
   let savedId = savedEntry ? savedEntry.id : null;
+  let tags = savedEntry && Array.isArray(savedEntry.tags) ? [...savedEntry.tags] : [];
+
+  const tagsLabel = document.createElement('label');
+  tagsLabel.textContent = 'Tags';
+  tagsLabel.className = 'field-label mt-0-5';
+
+  const chipsWrap = document.createElement('div');
+  chipsWrap.className = 'tag-chips-wrap';
+
+  const tagInput = document.createElement('input');
+  tagInput.type = 'text';
+  tagInput.className = 'tag-input mt-0-5';
+  tagInput.placeholder = 'Add tag, press Enter';
+
+  function renderChips() {
+    chipsWrap.innerHTML = '';
+    tags.forEach((tag, i) => {
+      const chip = document.createElement('span');
+      chip.className = 'tag-chip';
+      const text = document.createElement('span');
+      text.textContent = tag;
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.textContent = '×';
+      removeBtn.className = 'tag-chip-remove';
+      removeBtn.addEventListener('click', () => {
+        tags.splice(i, 1);
+        renderChips();
+        if (savedId) updateNpc(savedId, { tags });
+      });
+      chip.appendChild(text);
+      chip.appendChild(removeBtn);
+      chipsWrap.appendChild(chip);
+    });
+  }
+  renderChips();
+
+  function commitTag() {
+    const v = tagInput.value.trim();
+    tagInput.value = '';
+    if (!v || tags.includes(v)) return;
+    tags.push(v);
+    renderChips();
+    if (savedId) updateNpc(savedId, { tags });
+  }
+
+  tagInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      commitTag();
+    }
+  });
+  tagInput.addEventListener('blur', () => commitTag());
+
+  const saveBtn = document.createElement('button');
+  saveBtn.className = 'secondary mt-0-5';
   saveBtn.textContent = savedId ? 'Saved ✓' : 'Save';
 
   let debounceTimer;
@@ -1126,18 +1175,21 @@ function appendSaveControls(card, kind, npc, savedEntry) {
 
   saveBtn.addEventListener('click', () => {
     if (savedId) {
-      updateNpc(savedId, { data: npc, note: textarea.value });
+      updateNpc(savedId, { data: npc, note: textarea.value, tags });
     } else {
-      savedId = saveNpc({ kind, data: npc, note: textarea.value });
+      savedId = saveNpc({ kind, data: npc, note: textarea.value, tags });
       saveBtn.textContent = 'Saved ✓';
     }
   });
 
   wrap.appendChild(label);
   wrap.appendChild(textarea);
+  wrap.appendChild(tagsLabel);
+  wrap.appendChild(chipsWrap);
+  wrap.appendChild(tagInput);
   wrap.appendChild(saveBtn);
   card.appendChild(wrap);
-  return { getSavedId: () => savedId, getNote: () => textarea.value };
+  return { getSavedId: () => savedId, getNote: () => textarea.value, getTags: () => [...tags] };
 }
 
 function appendCopyBtn(card, getText) {
@@ -1239,8 +1291,8 @@ function renderSavedList(listEl, output, ctx) {
       nameBtn.addEventListener('click', () => {
         output.innerHTML = '';
         const card = entry.kind === 'full'
-          ? renderFullCard(entry.data, ctx, { id: entry.id, note: entry.note })
-          : renderQuickCard(entry.data, { id: entry.id, note: entry.note });
+          ? renderFullCard(entry.data, ctx, { id: entry.id, note: entry.note, tags: entry.tags })
+          : renderQuickCard(entry.data, { id: entry.id, note: entry.note, tags: entry.tags });
         output.appendChild(card);
       });
 

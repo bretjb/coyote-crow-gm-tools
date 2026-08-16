@@ -428,3 +428,25 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 
 .npc-avatar svg { display: block; width: 3.5rem; height: 3.5rem; border-radius: 50%; border: 1px solid var(--border); background: var(--surface-raised); }
 .npc-avatar-thumb svg { display: block; width: 1.75rem; height: 1.75rem; border-radius: 50%; border: 1px solid var(--border); background: var(--surface-raised); }
+
+.tag-chips-wrap { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.15rem 0.3rem 0.15rem 0.6rem;
+  font-size: 0.8rem;
+}
+.tag-chip-remove {
+  background: none;
+  border: none;
+  color: var(--muted);
+  padding: 0 0.2rem;
+  font-size: 0.9rem;
+  line-height: 1;
+}
+.tag-chip-remove:hover { color: var(--danger); opacity: 1; }
+.tag-input { width: 100%; }
