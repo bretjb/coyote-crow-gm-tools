@@ -531,7 +531,7 @@ function renderFullCard(npc, ctx, savedEntry, mode = 'view') {
     statSectionEl.innerHTML = '';
     statSectionEl.appendChild(buildStatSection(npc, rebuildBody, ctx.glossary, mode));
     skillSectionEl.innerHTML = '';
-    skillSectionEl.appendChild(buildSkillSection(npc, ctx.allSkills, rebuildBody, ctx.glossary));
+    skillSectionEl.appendChild(buildSkillSection(npc, ctx.allSkills, rebuildBody, ctx.glossary, mode));
     rollResult.innerHTML = '';
   }
   rebuildBody();
@@ -763,7 +763,7 @@ function buildNamedDescField({ label, current, options, onChange, customShape, f
   return { el };
 }
 
-function generalSkillRow(skillDef, npc, onChange, glossary) {
+function generalSkillRow(skillDef, npc, onChange, glossary, mode) {
   const acquired = npc.skills[skillDef.name];
   const rank = acquired ? acquired.general : 0;
   const vals = skillDef.diceCheck.map(s => npc.stats[s] || 0);
@@ -786,20 +786,26 @@ function generalSkillRow(skillDef, npc, onChange, glossary) {
   statTd.textContent = `${usedName} ${usedVal}`;
 
   const rankTd = document.createElement('td');
-  const rankInput = document.createElement('input');
-  rankInput.type = 'number';
-  rankInput.min = '0';
-  rankInput.max = '6';
-  rankInput.className = 'skill-rank-input';
-  rankInput.value = rank;
-  rankInput.addEventListener('click', e => e.stopPropagation());
-  rankInput.addEventListener('change', () => {
-    setGeneralRank(npc, skillDef.name, rankInput.value);
-    onChange();
-  });
-  rankTd.appendChild(rankInput);
-  if (skillDef.specialized?.length && rank >= 2 && !acquired?.specialized) {
-    rankTd.appendChild(buildAddSpecControl(skillDef, npc, onChange));
+  if (mode === 'view') {
+    const rankValue = document.createElement('span');
+    rankValue.textContent = rank;
+    rankTd.appendChild(rankValue);
+  } else {
+    const rankInput = document.createElement('input');
+    rankInput.type = 'number';
+    rankInput.min = '0';
+    rankInput.max = '6';
+    rankInput.className = 'skill-rank-input';
+    rankInput.value = rank;
+    rankInput.addEventListener('click', e => e.stopPropagation());
+    rankInput.addEventListener('change', () => {
+      setGeneralRank(npc, skillDef.name, rankInput.value);
+      onChange();
+    });
+    rankTd.appendChild(rankInput);
+    if (skillDef.specialized?.length && rank >= 2 && !acquired?.specialized) {
+      rankTd.appendChild(buildAddSpecControl(skillDef, npc, onChange));
+    }
   }
 
   const totalTd = document.createElement('td');
@@ -885,7 +891,7 @@ function setGeneralRank(npc, name, rawValue) {
   }
 }
 
-function buildGeneralSkillTable(skillsSubset, npc, onChange, glossary) {
+function buildGeneralSkillTable(skillsSubset, npc, onChange, glossary, mode) {
   const wrap = document.createElement('div');
   wrap.className = 'skill-table-wrap';
   const table = document.createElement('table');
@@ -893,20 +899,20 @@ function buildGeneralSkillTable(skillsSubset, npc, onChange, glossary) {
   table.innerHTML = '<thead><tr><th>Skill</th><th>Stat</th><th>Rank</th><th>Total</th></tr></thead>';
   const tbody = document.createElement('tbody');
   for (const skillDef of skillsSubset) {
-    tbody.appendChild(generalSkillRow(skillDef, npc, onChange, glossary));
+    tbody.appendChild(generalSkillRow(skillDef, npc, onChange, glossary, mode));
   }
   table.appendChild(tbody);
   wrap.appendChild(table);
   return wrap;
 }
 
-function buildSkillSection(npc, allSkills, onChange, glossary) {
+function buildSkillSection(npc, allSkills, onChange, glossary, mode) {
   const wrap = document.createElement('div');
   const half = Math.ceil(allSkills.length / 2);
   const pair = document.createElement('div');
   pair.className = 'skill-table-pair';
-  pair.appendChild(buildGeneralSkillTable(allSkills.slice(0, half), npc, onChange, glossary));
-  pair.appendChild(buildGeneralSkillTable(allSkills.slice(half), npc, onChange, glossary));
+  pair.appendChild(buildGeneralSkillTable(allSkills.slice(0, half), npc, onChange, glossary, mode));
+  pair.appendChild(buildGeneralSkillTable(allSkills.slice(half), npc, onChange, glossary, mode));
   wrap.appendChild(pair);
 
   const specEntries = Object.entries(npc.skills)
@@ -917,14 +923,14 @@ function buildSkillSection(npc, allSkills, onChange, glossary) {
     sec.innerHTML = '<h3 class="h3-section">Specialized Skills</h3>';
     const specWrap = document.createElement('div');
     specWrap.className = 'skill-table-wrap';
-    specWrap.appendChild(buildSpecTable(allSkills, npc, specEntries, onChange, glossary));
+    specWrap.appendChild(buildSpecTable(allSkills, npc, specEntries, onChange, glossary, mode));
     sec.appendChild(specWrap);
     wrap.appendChild(sec);
   }
   return wrap;
 }
 
-function buildSpecTable(allSkills, npc, specEntries, onChange, glossary) {
+function buildSpecTable(allSkills, npc, specEntries, onChange, glossary, mode) {
   const table = document.createElement('table');
   table.className = 'skill-table';
   table.innerHTML = '<thead><tr><th>Skill</th><th>Stat</th><th>Rank</th><th>Total</th></tr></thead>';
@@ -954,18 +960,24 @@ function buildSpecTable(allSkills, npc, specEntries, onChange, glossary) {
 
     const generalRank = npc.skills[generalName].general;
     const rankTd = document.createElement('td');
-    const rankInput = document.createElement('input');
-    rankInput.type = 'number';
-    rankInput.min = '0';
-    rankInput.max = String(Math.max(0, generalRank - 1));
-    rankInput.value = rank;
-    rankInput.className = 'skill-rank-input';
-    rankInput.addEventListener('click', e => e.stopPropagation());
-    rankInput.addEventListener('change', () => {
-      npc.skills[generalName].specialized.rank = clampSpecRank(rankInput.value, generalRank);
-      onChange();
-    });
-    rankTd.appendChild(rankInput);
+    if (mode === 'view') {
+      const rankValue = document.createElement('span');
+      rankValue.textContent = rank;
+      rankTd.appendChild(rankValue);
+    } else {
+      const rankInput = document.createElement('input');
+      rankInput.type = 'number';
+      rankInput.min = '0';
+      rankInput.max = String(Math.max(0, generalRank - 1));
+      rankInput.value = rank;
+      rankInput.className = 'skill-rank-input';
+      rankInput.addEventListener('click', e => e.stopPropagation());
+      rankInput.addEventListener('change', () => {
+        npc.skills[generalName].specialized.rank = clampSpecRank(rankInput.value, generalRank);
+        onChange();
+      });
+      rankTd.appendChild(rankInput);
+    }
 
     const totalTd = document.createElement('td');
     totalTd.textContent = pool;
