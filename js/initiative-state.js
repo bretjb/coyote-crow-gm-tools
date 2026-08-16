@@ -41,6 +41,7 @@ function load() {
 }
 
 let state = load();
+let clearStash = null;
 const listeners = new Set();
 
 function save() {
@@ -126,7 +127,15 @@ export function prevStep() {
 }
 
 export function clearAll() {
+  clearStash = { slots: state.slots, currentStep: state.currentStep, round: state.round };
   state = { slots: emptySlots(), currentStep: SLOT_COUNT, round: 1 };
+  notify();
+}
+
+export function undoClearAll() {
+  if (!clearStash) return;
+  state = clearStash;
+  clearStash = null;
   notify();
 }
 

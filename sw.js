@@ -1,4 +1,4 @@
-const CACHE = 'cc-gm-v22';
+const CACHE = 'cc-gm-v23';
 
 const ASSETS = [
   './',

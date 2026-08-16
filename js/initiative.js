@@ -1,5 +1,5 @@
 // js/initiative.js
-import { getState, addCombatant, removeCombatant, moveCombatant, nextStep, prevStep, clearAll, subscribe } from './initiative-state.js';
+import { getState, addCombatant, removeCombatant, moveCombatant, nextStep, prevStep, clearAll, undoClearAll, subscribe } from './initiative-state.js';
 
 export async function init(container) {
   container.innerHTML = `
@@ -15,16 +15,20 @@ export async function init(container) {
       <button id="init-next">Next Step</button>
       <span id="init-round" class="init-round"></span>
       <button id="init-clear" class="secondary">Clear All</button>
+      <button id="init-undo" class="secondary hidden">Undo</button>
     </div>
   `;
 
   const slotsEl = container.querySelector('#init-slots');
   const roundEl = container.querySelector('#init-round');
+  const undoBtn = container.querySelector('#init-undo');
   let dragHighlightRow = null;
+  let showUndo = false;
 
   function render() {
     const { slots, currentStep, round } = getState();
     roundEl.textContent = `Round ${round}`;
+    undoBtn.classList.toggle('hidden', !showUndo);
     slotsEl.innerHTML = Array.from({ length: 12 }, (_, i) => i + 1).map(slotNum => {
       const combatants = slots[slotNum];
       const isCurrent = slotNum === currentStep;
@@ -50,6 +54,7 @@ export async function init(container) {
     const name = container.querySelector('#init-name').value.trim();
     const slot = parseInt(container.querySelector('#init-slot').value, 10);
     if (!name || isNaN(slot) || slot < 1 || slot > 12) return;
+    showUndo = false;
     addCombatant(name, slot);
     e.target.reset();
   });
@@ -58,6 +63,7 @@ export async function init(container) {
     const removeBtn = e.target.closest('.init-remove');
     if (!removeBtn) return;
     const chip = removeBtn.closest('.init-chip');
+    showUndo = false;
     removeCombatant(chip.dataset.id);
   });
 
@@ -67,6 +73,7 @@ export async function init(container) {
     const newSlot = parseInt(moveInput.value, 10);
     if (isNaN(newSlot) || newSlot < 1 || newSlot > 12) return;
     const chip = moveInput.closest('.init-chip');
+    showUndo = false;
     moveCombatant(chip.dataset.id, newSlot);
   });
 
@@ -136,6 +143,7 @@ export async function init(container) {
 
       if (row) {
         const newSlot = parseInt(row.dataset.slot, 10);
+        showUndo = false;
         moveCombatant(chipId, newSlot);
         // moveCombatant's state change triggers render(), which replaces
         // #init-slots' contents wholesale — the dragged chip node (and its
@@ -162,9 +170,10 @@ export async function init(container) {
     handle.addEventListener('pointercancel', onCancel);
   });
 
-  container.querySelector('#init-next').addEventListener('click', () => nextStep());
-  container.querySelector('#init-prev').addEventListener('click', () => prevStep());
-  container.querySelector('#init-clear').addEventListener('click', () => clearAll());
+  container.querySelector('#init-next').addEventListener('click', () => { showUndo = false; nextStep(); });
+  container.querySelector('#init-prev').addEventListener('click', () => { showUndo = false; prevStep(); });
+  container.querySelector('#init-clear').addEventListener('click', () => { showUndo = true; clearAll(); });
+  container.querySelector('#init-undo').addEventListener('click', () => { showUndo = false; undoClearAll(); });
 
   subscribe(render);
   render();
