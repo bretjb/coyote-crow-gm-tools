@@ -3,6 +3,7 @@ import { allocateStats, calcDerivedStats, allocateSkills, selectGiftsBurdens, se
 import { rollDice, countSuccesses } from './dice.js';
 import { addCombatant } from './initiative-state.js';
 import { saveNpc, updateNpc, getAll, removeNpc, undoRemove, subscribe, exportAll, importMerge } from './npc-storage.js';
+import { loadGlossary, makeTooltip } from './npc-tooltip.js';
 
 async function loadJson(path) {
   const res = await fetch(path);
@@ -48,9 +49,9 @@ export async function init(container) {
     btnFull.classList.toggle('secondary', mode !== 'full');
   }
 
-  let nameData, components, motivations, paths, giftsAndBurdens, allSkills, abilities, archetypes;
+  let nameData, components, motivations, paths, giftsAndBurdens, allSkills, abilities, archetypes, glossaryList;
   try {
-    [nameData, components, motivations, paths, giftsAndBurdens, allSkills, abilities, archetypes] = await Promise.all([
+    [nameData, components, motivations, paths, giftsAndBurdens, allSkills, abilities, archetypes, glossaryList] = await Promise.all([
       loadNameData(),
       loadJson('data/npc-components.json'),
       loadJson('data/motivations.json'),
@@ -59,6 +60,7 @@ export async function init(container) {
       loadJson('data/skills.json'),
       loadJson('data/abilities.json'),
       loadJson('data/archetypes.json'),
+      loadGlossary(),
     ]);
   } catch {
     container.querySelector('#npc-output').innerHTML = '<p class="error">Data unavailable — please reload while online once to enable offline use.</p>';
@@ -67,7 +69,8 @@ export async function init(container) {
 
   const output = container.querySelector('#npc-output');
   const savedListEl = container.querySelector('#npc-saved-list');
-  const ctx = { nameData, components, motivations, paths, giftsAndBurdens, allSkills, abilities, archetypes };
+  const glossary = new Map(glossaryList.map(g => [g.name, g.description]));
+  const ctx = { nameData, components, motivations, paths, giftsAndBurdens, allSkills, abilities, archetypes, glossary };
   renderSavedList(savedListEl, output, ctx);
   subscribe(() => renderSavedList(savedListEl, output, ctx));
 
@@ -229,11 +232,10 @@ const STAT_ABBR = {
 };
 const DEFENSE_ABBR = { 'Physical Defence': 'PD', 'Mental Defence': 'MD', 'Mystical Defence': 'SD' };
 
-function statCell(statName, npc, onChange) {
+function statCell(statName, npc, onChange, glossary) {
   const td = document.createElement('td');
-  const label = document.createElement('span');
-  label.className = 'stat-cell-label';
-  label.textContent = STAT_ABBR[statName];
+  const label = makeTooltip(STAT_ABBR[statName], glossary.get(statName));
+  label.classList.add('stat-cell-label');
   const input = document.createElement('input');
   input.type = 'number';
   input.min = '1';
@@ -278,7 +280,7 @@ function currentCell(bodyKey, npc) {
   return td;
 }
 
-function buildStatSection(npc, onChange) {
+function buildStatSection(npc, onChange, glossary) {
   const wrap = document.createElement('div');
   wrap.className = 'stat-table-wrap';
   const table = document.createElement('table');
@@ -291,9 +293,9 @@ function buildStatSection(npc, onChange) {
   ];
   for (const [s1, s2, s3, defKey, bodyKey] of rows) {
     const tr = document.createElement('tr');
-    tr.appendChild(statCell(s1, npc, onChange));
-    tr.appendChild(statCell(s2, npc, onChange));
-    tr.appendChild(statCell(s3, npc, onChange));
+    tr.appendChild(statCell(s1, npc, onChange, glossary));
+    tr.appendChild(statCell(s2, npc, onChange, glossary));
+    tr.appendChild(statCell(s3, npc, onChange, glossary));
     tr.appendChild(readOnlyCell(DEFENSE_ABBR[defKey], npc.derived[defKey]));
     tr.appendChild(readOnlyCell(bodyKey, npc.derived[bodyKey]));
     tr.appendChild(currentCell(bodyKey, npc));
@@ -445,9 +447,9 @@ function renderFullCard(npc, ctx, savedEntry) {
 
   function rebuildBody() {
     statSectionEl.innerHTML = '';
-    statSectionEl.appendChild(buildStatSection(npc, rebuildBody));
+    statSectionEl.appendChild(buildStatSection(npc, rebuildBody, ctx.glossary));
     skillSectionEl.innerHTML = '';
-    skillSectionEl.appendChild(buildSkillSection(npc, ctx.allSkills, rebuildBody));
+    skillSectionEl.appendChild(buildSkillSection(npc, ctx.allSkills, rebuildBody, ctx.glossary));
     rollResult.innerHTML = '';
   }
   rebuildBody();
@@ -660,7 +662,7 @@ function buildNamedDescField({ label, current, options, onChange, customShape, f
   return { el };
 }
 
-function generalSkillRow(skillDef, npc, onChange) {
+function generalSkillRow(skillDef, npc, onChange, glossary) {
   const acquired = npc.skills[skillDef.name];
   const rank = acquired ? acquired.general : 0;
   const vals = skillDef.diceCheck.map(s => npc.stats[s] || 0);
@@ -678,7 +680,7 @@ function generalSkillRow(skillDef, npc, onChange) {
   tr.dataset.skillName = skillDef.name + (skillDef.requiresRank ? '*' : '');
 
   const nameTd = document.createElement('td');
-  nameTd.textContent = skillDef.name + (skillDef.requiresRank ? '*' : '');
+  nameTd.appendChild(makeTooltip(skillDef.name + (skillDef.requiresRank ? '*' : ''), glossary.get(skillDef.name)));
   const statTd = document.createElement('td');
   statTd.textContent = `${usedName} ${usedVal}`;
 
@@ -782,7 +784,7 @@ function setGeneralRank(npc, name, rawValue) {
   }
 }
 
-function buildGeneralSkillTable(skillsSubset, npc, onChange) {
+function buildGeneralSkillTable(skillsSubset, npc, onChange, glossary) {
   const wrap = document.createElement('div');
   wrap.className = 'skill-table-wrap';
   const table = document.createElement('table');
@@ -790,20 +792,20 @@ function buildGeneralSkillTable(skillsSubset, npc, onChange) {
   table.innerHTML = '<thead><tr><th>Skill</th><th>Stat</th><th>Rank</th><th>Total</th></tr></thead>';
   const tbody = document.createElement('tbody');
   for (const skillDef of skillsSubset) {
-    tbody.appendChild(generalSkillRow(skillDef, npc, onChange));
+    tbody.appendChild(generalSkillRow(skillDef, npc, onChange, glossary));
   }
   table.appendChild(tbody);
   wrap.appendChild(table);
   return wrap;
 }
 
-function buildSkillSection(npc, allSkills, onChange) {
+function buildSkillSection(npc, allSkills, onChange, glossary) {
   const wrap = document.createElement('div');
   const half = Math.ceil(allSkills.length / 2);
   const pair = document.createElement('div');
   pair.className = 'skill-table-pair';
-  pair.appendChild(buildGeneralSkillTable(allSkills.slice(0, half), npc, onChange));
-  pair.appendChild(buildGeneralSkillTable(allSkills.slice(half), npc, onChange));
+  pair.appendChild(buildGeneralSkillTable(allSkills.slice(0, half), npc, onChange, glossary));
+  pair.appendChild(buildGeneralSkillTable(allSkills.slice(half), npc, onChange, glossary));
   wrap.appendChild(pair);
 
   const specEntries = Object.entries(npc.skills)
@@ -814,14 +816,14 @@ function buildSkillSection(npc, allSkills, onChange) {
     sec.innerHTML = '<h3 class="h3-section">Specialized Skills</h3>';
     const specWrap = document.createElement('div');
     specWrap.className = 'skill-table-wrap';
-    specWrap.appendChild(buildSpecTable(allSkills, npc, specEntries, onChange));
+    specWrap.appendChild(buildSpecTable(allSkills, npc, specEntries, onChange, glossary));
     sec.appendChild(specWrap);
     wrap.appendChild(sec);
   }
   return wrap;
 }
 
-function buildSpecTable(allSkills, npc, specEntries, onChange) {
+function buildSpecTable(allSkills, npc, specEntries, onChange, glossary) {
   const table = document.createElement('table');
   table.className = 'skill-table';
   table.innerHTML = '<thead><tr><th>Skill</th><th>Stat</th><th>Rank</th><th>Total</th></tr></thead>';
@@ -840,7 +842,12 @@ function buildSpecTable(allSkills, npc, specEntries, onChange) {
     tr.dataset.skillName = `${name} (${generalName})`;
 
     const nameTd = document.createElement('td');
-    nameTd.innerHTML = `${esc(name)} <span class="text-muted-sm">${esc(generalName)}</span>`;
+    const specLabel = document.createElement('span');
+    specLabel.textContent = name + ' ';
+    const genTooltip = makeTooltip(generalName, glossary.get(generalName));
+    genTooltip.classList.add('text-muted-sm');
+    nameTd.appendChild(specLabel);
+    nameTd.appendChild(genTooltip);
     const statTd = document.createElement('td');
     statTd.textContent = `${higherName} ${higher}`;
 

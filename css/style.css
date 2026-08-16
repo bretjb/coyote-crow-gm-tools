@@ -322,6 +322,31 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 
 .save-controls-wrap { margin-top: 0.75rem; }
 .field-label { display: block; color: var(--muted); font-size: 0.8rem; margin-bottom: 0.25rem; }
+
+.tooltip-trigger { position: relative; display: inline-block; cursor: help; border-bottom: 1px dotted var(--muted); }
+.tooltip-bubble {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 20;
+  width: max-content;
+  max-width: 16rem;
+  margin-top: 0.35rem;
+  padding: 0.4rem 0.6rem;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 0.78rem;
+  font-weight: normal;
+  color: var(--text);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+@media (hover: hover) {
+  .tooltip-trigger:hover .tooltip-bubble,
+  .tooltip-trigger:focus-visible .tooltip-bubble { display: block; }
+}
+.tooltip-trigger.tooltip-open .tooltip-bubble { display: block; }
 .textarea-full { width: 100%; resize: vertical; }
 
 .inline-actions { margin-left: 0.5rem; display: inline-flex; align-items: center; gap: 0.3rem; }
