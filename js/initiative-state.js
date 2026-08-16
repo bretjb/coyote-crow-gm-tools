@@ -19,7 +19,7 @@ function clampSlot(value, fallback = 1) {
 function load() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { slots: emptySlots(), currentStep: SLOT_COUNT };
+    if (!raw) return { slots: emptySlots(), currentStep: SLOT_COUNT, round: 1 };
     const parsed = JSON.parse(raw);
     const slots = emptySlots();
     for (let i = 1; i <= SLOT_COUNT; i++) {
@@ -33,9 +33,10 @@ function load() {
       }
     }
     const currentStep = clampSlot(parsed.currentStep, SLOT_COUNT);
-    return { slots, currentStep };
+    const round = Number.isInteger(parsed.round) && parsed.round >= 1 ? parsed.round : 1;
+    return { slots, currentStep, round };
   } catch {
-    return { slots: emptySlots(), currentStep: SLOT_COUNT };
+    return { slots: emptySlots(), currentStep: SLOT_COUNT, round: 1 };
   }
 }
 
@@ -56,7 +57,7 @@ export function getState() {
   for (let i = 1; i <= SLOT_COUNT; i++) {
     slots[i] = state.slots[i].map(c => ({ ...c }));
   }
-  return { slots, currentStep: state.currentStep };
+  return { slots, currentStep: state.currentStep, round: state.round };
 }
 
 export function addCombatant(name, slot, source) {
@@ -100,6 +101,7 @@ export function nextStep() {
   if (!hasAnyCombatants()) return;
   let step = state.currentStep;
   for (let i = 0; i < SLOT_COUNT; i++) {
+    if (step === 1) state.round += 1;
     step = step === 1 ? SLOT_COUNT : step - 1;
     if (state.slots[step].length > 0) {
       state.currentStep = step;
@@ -113,6 +115,7 @@ export function prevStep() {
   if (!hasAnyCombatants()) return;
   let step = state.currentStep;
   for (let i = 0; i < SLOT_COUNT; i++) {
+    if (step === SLOT_COUNT) state.round = Math.max(1, state.round - 1);
     step = step === SLOT_COUNT ? 1 : step + 1;
     if (state.slots[step].length > 0) {
       state.currentStep = step;
@@ -123,7 +126,7 @@ export function prevStep() {
 }
 
 export function clearAll() {
-  state = { slots: emptySlots(), currentStep: SLOT_COUNT };
+  state = { slots: emptySlots(), currentStep: SLOT_COUNT, round: 1 };
   notify();
 }
 

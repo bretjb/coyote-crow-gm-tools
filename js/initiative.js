@@ -13,15 +13,18 @@ export async function init(container) {
     <div class="init-actions">
       <button id="init-prev" class="secondary">Prev Step</button>
       <button id="init-next">Next Step</button>
+      <span id="init-round" class="init-round"></span>
       <button id="init-clear" class="secondary">Clear All</button>
     </div>
   `;
 
   const slotsEl = container.querySelector('#init-slots');
+  const roundEl = container.querySelector('#init-round');
   let dragHighlightRow = null;
 
   function render() {
-    const { slots, currentStep } = getState();
+    const { slots, currentStep, round } = getState();
+    roundEl.textContent = `Round ${round}`;
     slotsEl.innerHTML = Array.from({ length: 12 }, (_, i) => i + 1).map(slotNum => {
       const combatants = slots[slotNum];
       const isCurrent = slotNum === currentStep;
