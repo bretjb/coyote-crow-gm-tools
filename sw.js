@@ -1,4 +1,4 @@
-const CACHE = 'cc-gm-v13';
+const CACHE = 'cc-gm-v14';
 
 const ASSETS = [
   './',
@@ -30,6 +30,7 @@ const ASSETS = [
   './data/skills.json',
   './data/abilities.json',
   './data/archetypes.json',
+  './data/quirks.json',
   './data/stat-skill-glossary.json',
   './data/rules/quick-ref.md',
   './data/rules/full-digest.md',

@@ -59,9 +59,9 @@ export async function init(container) {
     btnFull.classList.toggle('secondary', mode !== 'full');
   }
 
-  let nameData, components, motivations, paths, giftsAndBurdens, allSkills, abilities, archetypes, glossaryList;
+  let nameData, components, motivations, paths, giftsAndBurdens, allSkills, abilities, archetypes, glossaryList, quirks;
   try {
-    [nameData, components, motivations, paths, giftsAndBurdens, allSkills, abilities, archetypes, glossaryList] = await Promise.all([
+    [nameData, components, motivations, paths, giftsAndBurdens, allSkills, abilities, archetypes, glossaryList, quirks] = await Promise.all([
       loadNameData(),
       loadJson('data/npc-components.json'),
       loadJson('data/motivations.json'),
@@ -71,6 +71,7 @@ export async function init(container) {
       loadJson('data/abilities.json'),
       loadJson('data/archetypes.json'),
       loadGlossary(),
+      loadJson('data/quirks.json'),
     ]);
   } catch {
     container.querySelector('#npc-output').innerHTML = '<p class="error">Data unavailable — please reload while online once to enable offline use.</p>';
@@ -80,7 +81,7 @@ export async function init(container) {
   const output = container.querySelector('#npc-output');
   const savedListEl = container.querySelector('#npc-saved-list');
   const glossary = new Map(glossaryList.map(g => [g.name, g.description]));
-  const ctx = { nameData, components, motivations, paths, giftsAndBurdens, allSkills, abilities, archetypes, glossary };
+  const ctx = { nameData, components, motivations, paths, giftsAndBurdens, allSkills, abilities, archetypes, glossary, quirks };
   renderSavedList(savedListEl, output, ctx);
   subscribe(() => renderSavedList(savedListEl, output, ctx));
 
@@ -129,13 +130,13 @@ export async function init(container) {
   btnFull.addEventListener('click', () => {
     setActiveMode('full');
     const archetype = archetypes[Math.floor(Math.random() * archetypes.length)];
-    const npc = generateFullNpc({ nameData, motivations, paths, giftsAndBurdens, allSkills, abilities, archetype });
+    const npc = generateFullNpc({ nameData, motivations, paths, giftsAndBurdens, allSkills, abilities, archetype, quirks });
     output.innerHTML = '';
     output.appendChild(renderFullCard(npc, ctx, undefined));
   });
 }
 
-function generateFullNpc({ nameData, motivations, paths, giftsAndBurdens, allSkills, abilities, archetype }) {
+function generateFullNpc({ nameData, motivations, paths, giftsAndBurdens, allSkills, abilities, archetype, quirks }) {
   const path = pick(paths);
   const stats = allocateStats(42, archetype.statPriorities);
   // Archetype grants +1 to its focus stat; path grants +1 to each of its two stats
@@ -159,6 +160,7 @@ function generateFullNpc({ nameData, motivations, paths, giftsAndBurdens, allSki
       formality: pick(VOICE_FORMALITY),
     },
     motivation: pick(motivations),
+    quirk: pick(quirks),
     archetype: archetype.name,
     archetypeStatBonus: archetype.statBonus,
     freeSkill,
@@ -205,6 +207,12 @@ function ensureVoice(npc) {
       pitch: pick(VOICE_PITCH),
       formality: pick(VOICE_FORMALITY),
     };
+  }
+}
+
+function ensureQuirk(npc, quirks) {
+  if (!npc.quirk) {
+    npc.quirk = pick(quirks);
   }
 }
 
@@ -395,6 +403,7 @@ function renderFullCard(npc, ctx, savedEntry, mode = 'view') {
   ensureCurrent(npc);
   ensureAvatarSeed(npc);
   ensureVoice(npc);
+  ensureQuirk(npc, ctx.quirks);
   const card = document.createElement('div');
   card.className = 'card';
   card.classList.toggle('is-editing', mode === 'edit');
@@ -414,6 +423,7 @@ function renderFullCard(npc, ctx, savedEntry, mode = 'view') {
     <h3 class="h3-section">Voice</h3>
     <div id="voice-section" class="row-flex-wrap mb-0-5"></div>
     <div id="motivation-section" class="mb-0-75"></div>
+    <div id="quirk-section" class="mb-0-75"></div>
     <div id="path-section" class="mb-0-5"></div>
     <p class="mb-0-75"><strong>Gifts/Burdens:</strong> ${esc(gb)}</p>
 
@@ -585,6 +595,16 @@ function renderFullCard(npc, ctx, savedEntry, mode = 'view') {
       current: npc.motivation,
       options: ctx.motivations,
       onChange: v => { npc.motivation = v; },
+      mode,
+    }).el
+  );
+
+  card.querySelector('#quirk-section').appendChild(
+    buildNamedDescField({
+      label: 'Quirk',
+      current: npc.quirk,
+      options: ctx.quirks,
+      onChange: v => { npc.quirk = v; },
       mode,
     }).el
   );
@@ -1260,5 +1280,8 @@ function npcToText(npc) {
   const voiceLine = npc.voice
     ? `Voice: ${npc.voice.pace}, ${npc.voice.volume}, ${npc.voice.pitch} pitch, ${npc.voice.formality}\n`
     : '';
-  return `${npc.name}\n${npc.archetype} (+1 ${npc.archetypeStatBonus}, free: ${npc.freeSkill}) · ${npc.age} · ${npc.gender} · ${npc.sexuality}\n${voiceLine}Motivation: ${npc.motivation.name}\n${pathLine}\nGifts/Burdens: ${gb}\n\nStats:\n${stats}\n\nDerived:\n${derived}${current}\n\nSkills:\n${skills}\n\nAbility: ${npc.ability.name} — ${npc.ability.description}`;
+  const quirkLine = npc.quirk
+    ? `Quirk: ${npc.quirk.name} — ${npc.quirk.description}\n`
+    : '';
+  return `${npc.name}\n${npc.archetype} (+1 ${npc.archetypeStatBonus}, free: ${npc.freeSkill}) · ${npc.age} · ${npc.gender} · ${npc.sexuality}\n${voiceLine}${quirkLine}Motivation: ${npc.motivation.name}\n${pathLine}\nGifts/Burdens: ${gb}\n\nStats:\n${stats}\n\nDerived:\n${derived}${current}\n\nSkills:\n${skills}\n\nAbility: ${npc.ability.name} — ${npc.ability.description}`;
 }
