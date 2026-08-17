@@ -137,6 +137,11 @@ button:focus-visible {
   outline-offset: 2px;
 }
 
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 button.secondary {
   background: var(--surface-raised);
   color: var(--text);
