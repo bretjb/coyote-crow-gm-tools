@@ -419,10 +419,13 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
     border-bottom: none;
     border-top: 2px solid var(--border);
     z-index: 10;
+    overflow-x: auto;
+    flex-wrap: nowrap;
   }
 
   .tab-btn {
-    padding: 0.4rem 0.2rem;
+    flex: 0 0 auto;
+    padding: 0.4rem 0.75rem;
     font-size: 0.72rem;
     border-bottom: none;
     border-top: 3px solid transparent;
