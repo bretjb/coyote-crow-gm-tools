@@ -163,8 +163,7 @@ function renderPcCard(pc, ctx, savedEntry, mode = 'view') {
   card.innerHTML = `
     <div id="pc-edit-toggle" class="row-flex-wrap mb-0-5"></div>
     <div id="pc-name-section" class="row-flex-wrap mb-0-5"></div>
-    <div id="pc-archetype-section" class="mb-0-5"></div>
-    <div id="pc-demographics-section" class="row-flex-wrap mb-0-5"></div>
+    <div id="pc-identity-grid" class="identity-grid mb-0-75"></div>
     <div id="pc-motivation-section" class="mb-0-75"></div>
     <div id="pc-path-section" class="mb-0-5"></div>
     <div id="pc-gb-section" class="mb-0-75"></div>
@@ -221,18 +220,16 @@ function renderPcCard(pc, ctx, savedEntry, mode = 'view') {
     nameSectionEl.appendChild(nameInput);
   }
 
-  const archetypeSectionEl = card.querySelector('#pc-archetype-section');
-  archetypeSectionEl.appendChild(
+  const identityGridEl = card.querySelector('#pc-identity-grid');
+  identityGridEl.appendChild(
     buildSelectCustomField({
       label: 'Archetype', value: pc.archetype, options: ctx.archetypes.map(a => a.name),
       onChange: v => { pc.archetype = v; }, mode,
     }).el
   );
-
-  const demoSectionEl = card.querySelector('#pc-demographics-section');
-  demoSectionEl.appendChild(buildTextField({ label: 'Age', value: pc.age, onChange: v => { pc.age = v; }, mode }).el);
-  demoSectionEl.appendChild(buildTextField({ label: 'Gender', value: pc.gender, onChange: v => { pc.gender = v; }, mode }).el);
-  demoSectionEl.appendChild(buildTextField({ label: 'Sexuality', value: pc.sexuality, onChange: v => { pc.sexuality = v; }, mode }).el);
+  identityGridEl.appendChild(buildTextField({ label: 'Age', value: pc.age, onChange: v => { pc.age = v; }, mode }).el);
+  identityGridEl.appendChild(buildTextField({ label: 'Gender', value: pc.gender, onChange: v => { pc.gender = v; }, mode }).el);
+  identityGridEl.appendChild(buildTextField({ label: 'Sexuality', value: pc.sexuality, onChange: v => { pc.sexuality = v; }, mode }).el);
 
   card.querySelector('#pc-motivation-section').appendChild(
     buildNamedDescField({
