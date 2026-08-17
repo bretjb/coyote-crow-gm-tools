@@ -7,7 +7,7 @@ import { createAvatar } from './lib/dicebear/core.js';
 import * as adventurer from './lib/dicebear/adventurer.js';
 import { buildNpcSheetPdf } from './npc-pdf-export.js';
 import {
-  esc, ensureCurrent, recalcDerivedAndSyncCurrent,
+  esc, ensureCurrent, recalcDerivedAndSyncCurrent, stripPathPrefix,
   buildStatSection, buildSkillSection,
   buildSelectCustomField, buildNamedDescField,
   appendSaveControls, appendCopyBtn, appendInitiativeBtn,
@@ -515,7 +515,7 @@ function renderFullCard(npc, ctx, savedEntry, mode = 'view') {
   if (mode === 'view') {
     const p = document.createElement('p');
     p.className = 'npc-meta';
-    p.textContent = `Path: ${npc.path.name}`;
+    p.textContent = `Path: ${stripPathPrefix(npc.path.name)}`;
     pathSectionEl.appendChild(p);
     if (npc.path.statBonuses.length) {
       const note = document.createElement('p');

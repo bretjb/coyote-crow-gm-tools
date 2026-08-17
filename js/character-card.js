@@ -9,6 +9,11 @@ export function esc(s) {
   return div.innerHTML;
 }
 
+export function stripPathPrefix(name) {
+  const PATH_PREFIX = 'Path of the ';
+  return name.startsWith(PATH_PREFIX) ? name.slice(PATH_PREFIX.length) : name;
+}
+
 export function ensureCurrent(character) {
   if (!character.current) {
     character.current = { Body: character.derived.Body, Mind: character.derived.Mind, Soul: character.derived.Soul };

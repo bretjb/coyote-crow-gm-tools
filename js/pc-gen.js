@@ -1,6 +1,6 @@
 // js/pc-gen.js
 import {
-  esc, ensureCurrent, buildStatSection, buildSkillSection,
+  esc, ensureCurrent, stripPathPrefix, buildStatSection, buildSkillSection,
   buildSelectCustomField, buildNamedDescField, readOnlyField,
   appendSaveControls, appendCopyBtn, appendInitiativeBtn,
 } from './character-card.js';
@@ -247,7 +247,9 @@ function renderPcCard(pc, ctx, savedEntry, mode = 'view') {
   const pathSectionEl = card.querySelector('#pc-path-section');
   pathSectionEl.appendChild(
     buildSelectCustomField({
-      label: 'Path', value: pc.path.name, options: ctx.paths.map(p => p.name),
+      label: 'Path',
+      value: mode === 'view' ? stripPathPrefix(pc.path.name) : pc.path.name,
+      options: ctx.paths.map(p => p.name),
       onChange: v => { pc.path.name = v; }, mode,
     }).el
   );
