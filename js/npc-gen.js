@@ -294,10 +294,7 @@ function renderFullCard(npc, ctx, savedEntry, mode = 'view') {
       <div id="avatar-section" class="npc-avatar"></div>
       <div id="name-section" class="row-flex-wrap flex-1"></div>
     </div>
-    <div id="archetype-section" class="mb-0-5"></div>
-    <div id="demographics-section" class="row-flex-wrap mb-0-5"></div>
-    <h3 class="h3-section">Voice</h3>
-    <div id="voice-section" class="row-flex-wrap mb-0-5"></div>
+    <div id="identity-grid" class="identity-grid mb-0-75"></div>
     <div id="motivation-section" class="mb-0-75"></div>
     <div id="quirk-section" class="mb-0-75"></div>
     <div id="path-section" class="mb-0-5"></div>
@@ -380,7 +377,8 @@ function renderFullCard(npc, ctx, savedEntry, mode = 'view') {
     nameSectionEl.appendChild(regenAvatarBtn);
   }
 
-  const archetypeSectionEl = card.querySelector('#archetype-section');
+  const identityGridEl = card.querySelector('#identity-grid');
+  const archetypeCell = document.createElement('div');
   function archetypeNoteText() {
     return `+1 ${npc.archetypeStatBonus} · free rank: ${npc.freeSkill}`;
   }
@@ -391,8 +389,8 @@ function renderFullCard(npc, ctx, savedEntry, mode = 'view') {
     const note = document.createElement('p');
     note.className = 'npc-meta-sm';
     note.textContent = archetypeNoteText();
-    archetypeSectionEl.appendChild(p);
-    archetypeSectionEl.appendChild(note);
+    archetypeCell.appendChild(p);
+    archetypeCell.appendChild(note);
   } else {
     const archetypeSelect = document.createElement('select');
     for (const a of ctx.archetypes) {
@@ -417,9 +415,10 @@ function renderFullCard(npc, ctx, savedEntry, mode = 'view') {
       rebuildBody();
     });
 
-    archetypeSectionEl.appendChild(archetypeSelect);
-    archetypeSectionEl.appendChild(archetypeNote);
+    archetypeCell.appendChild(archetypeSelect);
+    archetypeCell.appendChild(archetypeNote);
   }
+  identityGridEl.appendChild(archetypeCell);
 
   function archetypeDemographics(key) {
     const def = ctx.archetypes.find(a => a.name === npc.archetype);
@@ -427,7 +426,6 @@ function renderFullCard(npc, ctx, savedEntry, mode = 'view') {
     return [...new Set(list)];
   }
 
-  const demoSectionEl = card.querySelector('#demographics-section');
   const ageField = buildSelectCustomField({
     label: 'Age', value: npc.age, options: archetypeDemographics('age'),
     onChange: v => { npc.age = v; }, mode,
@@ -440,11 +438,10 @@ function renderFullCard(npc, ctx, savedEntry, mode = 'view') {
     label: 'Sexuality', value: npc.sexuality, options: archetypeDemographics('sexuality'),
     onChange: v => { npc.sexuality = v; }, mode,
   });
-  demoSectionEl.appendChild(ageField.el);
-  demoSectionEl.appendChild(genderField.el);
-  demoSectionEl.appendChild(sexualityField.el);
+  identityGridEl.appendChild(ageField.el);
+  identityGridEl.appendChild(genderField.el);
+  identityGridEl.appendChild(sexualityField.el);
 
-  const voiceSectionEl = card.querySelector('#voice-section');
   const paceField = buildSelectCustomField({
     label: 'Pace', value: npc.voice.pace, options: VOICE_PACE,
     onChange: v => { npc.voice.pace = v; }, mode,
@@ -461,10 +458,10 @@ function renderFullCard(npc, ctx, savedEntry, mode = 'view') {
     label: 'Formality', value: npc.voice.formality, options: VOICE_FORMALITY,
     onChange: v => { npc.voice.formality = v; }, mode,
   });
-  voiceSectionEl.appendChild(paceField.el);
-  voiceSectionEl.appendChild(volumeField.el);
-  voiceSectionEl.appendChild(pitchField.el);
-  voiceSectionEl.appendChild(formalityField.el);
+  identityGridEl.appendChild(paceField.el);
+  identityGridEl.appendChild(volumeField.el);
+  identityGridEl.appendChild(pitchField.el);
+  identityGridEl.appendChild(formalityField.el);
 
   card.querySelector('#motivation-section').appendChild(
     buildNamedDescField({

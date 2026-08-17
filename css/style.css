@@ -264,6 +264,20 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 .stat-table tbody tr:nth-child(even) td { background: var(--surface-raised); }
 .stat-input { width: 3rem; text-align: center; }
 
+.identity-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.identity-grid > * {
+  margin: 0;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--border);
+}
+
 .skill-table-pair { display: flex; gap: 0.75rem; margin-bottom: 0.75rem; }
 .skill-table-pair .skill-table-wrap { flex: 1 1 50%; margin-bottom: 0; }
 .skill-rank-input { width: 3rem; text-align: center; }
