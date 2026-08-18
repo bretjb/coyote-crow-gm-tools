@@ -263,6 +263,7 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 .stat-table td { padding: 0.5rem 0.5rem; border: 1px solid var(--border); text-align: center; vertical-align: top; }
 .stat-table tbody tr:nth-child(even) td { background: var(--surface-raised); }
 .stat-input { width: 3rem; text-align: center; }
+.current-score-input { width: 4.25rem; padding-right: 0.25rem; }
 
 .identity-grid {
   display: grid;
@@ -397,6 +398,9 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
   width: 3.75rem;
   font-size: 1.05rem;
   padding: 0.5rem 0.4rem;
+}
+.card.is-editing .current-score-input {
+  width: 5rem;
 }
 
 .tooltip-trigger { position: relative; display: inline-block; cursor: help; border-bottom: 1px dotted var(--muted); }

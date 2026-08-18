@@ -87,7 +87,7 @@ export function currentCell(bodyKey, character) {
   const input = document.createElement('input');
   input.type = 'number';
   input.min = '0';
-  input.className = 'stat-input';
+  input.className = 'stat-input current-score-input';
   input.value = character.current[bodyKey];
   input.addEventListener('change', () => {
     const max = character.derived[bodyKey];
