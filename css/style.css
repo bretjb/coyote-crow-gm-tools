@@ -544,3 +544,19 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 }
 
 .wizard-step-nav { margin-top: 0.5rem; }
+
+.wizard-gb-entry {
+  padding: 0.4rem 0.6rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.wizard-points-badge {
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.wizard-points-badge.negative { border-color: var(--danger); color: var(--danger); }

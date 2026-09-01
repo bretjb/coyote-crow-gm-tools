@@ -7,7 +7,7 @@ export const STAT_NAMES = [
 ];
 
 // Bumped by later tasks as more steps are implemented (2 -> 3 -> 4 -> 5).
-let STEP_COUNT = 2;
+let STEP_COUNT = 3;
 
 function blankWizardState() {
   return {
@@ -29,6 +29,14 @@ function archetypeObj(state, ctx) {
 
 function pathObj(state, ctx) {
   return ctx.paths.find(p => p.name === state.path) || null;
+}
+
+function gbPointsRemaining(state) {
+  return state.gbEntries.reduce((sum, e) => sum - e.magnitude, 5);
+}
+
+function gbLeftover(state) {
+  return Math.max(0, gbPointsRemaining(state));
 }
 
 function buildStepNav({ onBack, onNext, nextLabel = 'Next', nextDisabled = false }) {
@@ -107,6 +115,103 @@ function buildPathStep(state, ctx, rerender) {
   return wrap;
 }
 
+const GB_MAGNITUDES = [3, 2, 1, -1, -2, -3];
+
+function buildGiftsBurdensStep(state, ctx, rerender) {
+  const wrap = document.createElement('div');
+  const heading = document.createElement('h3');
+  heading.className = 'mb-0-5';
+  heading.textContent = 'Gifts and Burdens';
+  wrap.appendChild(heading);
+
+  const textLabel = document.createElement('label');
+  textLabel.className = 'field-label';
+  textLabel.textContent = 'Describe your Gifts and Burdens';
+  const textarea = document.createElement('textarea');
+  textarea.className = 'textarea-full mb-0-75';
+  textarea.rows = 3;
+  textarea.value = state.giftsAndBurdens;
+  textarea.addEventListener('change', () => { state.giftsAndBurdens = textarea.value.trim(); });
+  wrap.appendChild(textLabel);
+  wrap.appendChild(textarea);
+
+  const addRow = document.createElement('div');
+  addRow.className = 'row-flex-wrap mb-0-75';
+  const addLabel = document.createElement('span');
+  addLabel.className = 'field-label';
+  addLabel.textContent = 'Add an entry:';
+  addRow.appendChild(addLabel);
+  GB_MAGNITUDES.forEach(mag => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'secondary';
+    btn.textContent = mag > 0 ? `+${mag}` : `${mag}`;
+    btn.addEventListener('click', () => {
+      state.gbEntries.push({ magnitude: mag });
+      rerender();
+    });
+    addRow.appendChild(btn);
+  });
+  wrap.appendChild(addRow);
+
+  if (state.gbEntries.length > 0) {
+    const list = document.createElement('div');
+    list.className = 'mb-0-75';
+    state.gbEntries.forEach((entry, idx) => {
+      const row = document.createElement('div');
+      row.className = 'row-flex-wrap wizard-gb-entry';
+      const label = document.createElement('span');
+      label.className = 'flex-1';
+      label.textContent = entry.magnitude > 0
+        ? `Gift, level ${entry.magnitude} (costs ${entry.magnitude})`
+        : `Burden, level ${-entry.magnitude} (grants ${-entry.magnitude})`;
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.className = 'secondary';
+      removeBtn.textContent = 'Remove';
+      removeBtn.addEventListener('click', () => {
+        state.gbEntries.splice(idx, 1);
+        rerender();
+      });
+      row.appendChild(label);
+      row.appendChild(removeBtn);
+      list.appendChild(row);
+    });
+    wrap.appendChild(list);
+  }
+
+  const remaining = gbPointsRemaining(state);
+  const statusRow = document.createElement('div');
+  statusRow.className = 'row-flex-wrap mb-0-75';
+  const badge = document.createElement('span');
+  badge.className = `wizard-points-badge${remaining < 0 ? ' negative' : ''}`;
+  badge.textContent = `${remaining} pt${remaining === 1 ? '' : 's'} remaining`;
+  statusRow.appendChild(badge);
+
+  const applyLabel = document.createElement('label');
+  applyLabel.className = 'field-label';
+  applyLabel.textContent = 'Leftover points apply to:';
+  const applySelect = document.createElement('select');
+  ['stats', 'skills'].forEach(v => {
+    const opt = document.createElement('option');
+    opt.value = v;
+    opt.textContent = v === 'stats' ? 'Stats' : 'Skills';
+    opt.selected = state.gbApplyTo === v;
+    applySelect.appendChild(opt);
+  });
+  applySelect.addEventListener('change', () => { state.gbApplyTo = applySelect.value; rerender(); });
+  statusRow.appendChild(applyLabel);
+  statusRow.appendChild(applySelect);
+  wrap.appendChild(statusRow);
+
+  wrap.appendChild(buildStepNav({
+    onBack: () => { state.step = 1; rerender(); },
+    onNext: () => { state.step = 3; rerender(); },
+    nextDisabled: remaining < 0,
+  }));
+  return wrap;
+}
+
 function summaryText(i, state, ctx) {
   if (i === 0) {
     const arch = archetypeObj(state, ctx);
@@ -115,6 +220,10 @@ function summaryText(i, state, ctx) {
   if (i === 1) {
     const path = pathObj(state, ctx);
     return `Path: ${state.path}${path ? ` (+1 ${path.statBonuses.join(', +1 ')})` : ''}`;
+  }
+  if (i === 2) {
+    const remaining = gbPointsRemaining(state);
+    return `Gifts/Burdens: ${state.gbEntries.length} entr${state.gbEntries.length === 1 ? 'y' : 'ies'}, ${remaining} pt${remaining === 1 ? '' : 's'} remaining -> ${state.gbApplyTo === 'stats' ? 'Stats' : 'Skills'}`;
   }
   return '';
 }
@@ -138,6 +247,7 @@ function buildSummaryLine(i, state, ctx, rerender) {
 function buildStepBody(i, state, ctx, rerender) {
   if (i === 0) return buildArchetypeStep(state, ctx, rerender);
   if (i === 1) return buildPathStep(state, ctx, rerender);
+  if (i === 2) return buildGiftsBurdensStep(state, ctx, rerender);
   const empty = document.createElement('div');
   return empty;
 }
