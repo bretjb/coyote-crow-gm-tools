@@ -1,11 +1,11 @@
 const STAT_NAMES = ['Strength','Agility','Endurance','Intelligence','Perception','Wisdom','Spirit','Charisma','Will'];
 // STAT_COSTS[i] = total cost to reach stat value (i+1). e.g., STAT_COSTS[1]=3 means value 2 costs 3 total.
-const STAT_COSTS = [0, 3, 6, 10, 15];
+export const STAT_COSTS = [0, 3, 6, 10, 15];
 // STAT_INCREMENT[i] = cost to go from value (i+1) to (i+2)
 const STAT_INCREMENT = [3, 3, 4, 5];
 
 // SKILL_COSTS[rank] = total cost to reach that rank. rank 0 = unranked (cost 0).
-const SKILL_COSTS = [0, 1, 3, 6, 10, 15, 21];
+export const SKILL_COSTS = [0, 1, 3, 6, 10, 15, 21];
 
 export function weightedRandom(items, weights) {
   const total = weights.reduce((a, b) => a + b, 0);
