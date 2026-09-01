@@ -560,3 +560,28 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 }
 
 .wizard-points-badge.negative { border-color: var(--danger); color: var(--danger); }
+
+.wizard-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.6rem;
+  margin-bottom: 0.75rem;
+}
+
+.wizard-stat-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.6rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  text-align: center;
+}
+
+.wizard-stat-name { font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.wizard-stat-value { font-family: var(--font-display); font-size: 1.6rem; color: var(--text); }
+
+.wizard-stepper { display: flex; gap: 0.4rem; margin-top: 0.3rem; }
+.wizard-stepper button { min-width: 2.2rem; }

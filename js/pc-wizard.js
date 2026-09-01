@@ -1,5 +1,6 @@
 // js/pc-wizard.js
 import { esc } from './character-card.js';
+import { STAT_COSTS } from './npc-character-gen.js';
 
 export const STAT_NAMES = [
   'Strength', 'Agility', 'Endurance', 'Intelligence',
@@ -7,7 +8,7 @@ export const STAT_NAMES = [
 ];
 
 // Bumped by later tasks as more steps are implemented (2 -> 3 -> 4 -> 5).
-let STEP_COUNT = 3;
+let STEP_COUNT = 4;
 
 function blankWizardState() {
   return {
@@ -37,6 +38,58 @@ function gbPointsRemaining(state) {
 
 function gbLeftover(state) {
   return Math.max(0, gbPointsRemaining(state));
+}
+
+function archetypeStatBonus(name, state, ctx) {
+  const arch = archetypeObj(state, ctx);
+  return arch && arch.statBonus === name ? 1 : 0;
+}
+
+function pathStatBonus(name, state, ctx) {
+  const path = pathObj(state, ctx);
+  return path && path.statBonuses.includes(name) ? 1 : 0;
+}
+
+function statBonus(name, state, ctx) {
+  return archetypeStatBonus(name, state, ctx) + pathStatBonus(name, state, ctx);
+}
+
+function displayedStat(name, state, ctx) {
+  return state.stats[name] + statBonus(name, state, ctx);
+}
+
+function statStepCost(purchasedValue) {
+  if (purchasedValue >= 5) return null;
+  return STAT_COSTS[purchasedValue] - STAT_COSTS[purchasedValue - 1];
+}
+
+function statBudget(state) {
+  return 42 + (state.gbApplyTo === 'stats' ? gbLeftover(state) : 0);
+}
+
+function totalStatSpent(state) {
+  return STAT_NAMES.reduce((sum, name) => sum + STAT_COSTS[state.stats[name] - 1], 0);
+}
+
+function statPointsRemaining(state) {
+  return statBudget(state) - totalStatSpent(state);
+}
+
+function reconcileStatBudget(state) {
+  let guard = 0;
+  while (statPointsRemaining(state) < 0 && guard < 100) {
+    let target = null;
+    let bestCost = -1;
+    STAT_NAMES.forEach(name => {
+      const v = state.stats[name];
+      if (v <= 1) return;
+      const cost = STAT_COSTS[v - 1] - STAT_COSTS[v - 2];
+      if (cost > bestCost) { bestCost = cost; target = name; }
+    });
+    if (!target) break;
+    state.stats[target] -= 1;
+    guard++;
+  }
 }
 
 function buildStepNav({ onBack, onNext, nextLabel = 'Next', nextDisabled = false }) {
@@ -212,6 +265,64 @@ function buildGiftsBurdensStep(state, ctx, rerender) {
   return wrap;
 }
 
+function buildStatsStep(state, ctx, rerender) {
+  const wrap = document.createElement('div');
+  const heading = document.createElement('h3');
+  heading.className = 'mb-0-5';
+  heading.textContent = 'Allocate Stats';
+  wrap.appendChild(heading);
+
+  const remaining = statPointsRemaining(state);
+  const badge = document.createElement('div');
+  badge.className = `wizard-points-badge mb-0-75${remaining < 0 ? ' negative' : ''}`;
+  badge.textContent = `Stat points remaining: ${remaining} / ${statBudget(state)}`;
+  wrap.appendChild(badge);
+
+  const grid = document.createElement('div');
+  grid.className = 'wizard-stat-grid';
+  STAT_NAMES.forEach(name => {
+    const purchased = state.stats[name];
+    const bonus = statBonus(name, state, ctx);
+    const displayed = purchased + bonus;
+    const nextCost = statStepCost(purchased);
+
+    const cell = document.createElement('div');
+    cell.className = 'wizard-stat-cell';
+    cell.innerHTML = `
+      <span class="wizard-stat-name">${esc(name)}</span>
+      <span class="wizard-stat-value">${displayed}</span>
+      <span class="text-muted-sm">${purchased} purchased${bonus ? ` + ${bonus} bonus` : ''}</span>
+    `;
+
+    const stepper = document.createElement('div');
+    stepper.className = 'wizard-stepper';
+    const decBtn = document.createElement('button');
+    decBtn.type = 'button';
+    decBtn.className = 'secondary';
+    decBtn.textContent = '−';
+    decBtn.disabled = purchased <= 1;
+    decBtn.addEventListener('click', () => { state.stats[name] -= 1; rerender(); });
+    const incBtn = document.createElement('button');
+    incBtn.type = 'button';
+    incBtn.className = 'secondary';
+    incBtn.textContent = '+';
+    incBtn.disabled = nextCost === null || nextCost > remaining;
+    incBtn.addEventListener('click', () => { state.stats[name] += 1; rerender(); });
+    stepper.appendChild(decBtn);
+    stepper.appendChild(incBtn);
+    cell.appendChild(stepper);
+
+    grid.appendChild(cell);
+  });
+  wrap.appendChild(grid);
+
+  wrap.appendChild(buildStepNav({
+    onBack: () => { state.step = 2; rerender(); },
+    onNext: () => { state.step = 4; rerender(); },
+  }));
+  return wrap;
+}
+
 function summaryText(i, state, ctx) {
   if (i === 0) {
     const arch = archetypeObj(state, ctx);
@@ -224,6 +335,9 @@ function summaryText(i, state, ctx) {
   if (i === 2) {
     const remaining = gbPointsRemaining(state);
     return `Gifts/Burdens: ${state.gbEntries.length} entr${state.gbEntries.length === 1 ? 'y' : 'ies'}, ${remaining} pt${remaining === 1 ? '' : 's'} remaining -> ${state.gbApplyTo === 'stats' ? 'Stats' : 'Skills'}`;
+  }
+  if (i === 3) {
+    return `Stats: ${totalStatSpent(state)}/${statBudget(state)} points spent`;
   }
   return '';
 }
@@ -248,6 +362,7 @@ function buildStepBody(i, state, ctx, rerender) {
   if (i === 0) return buildArchetypeStep(state, ctx, rerender);
   if (i === 1) return buildPathStep(state, ctx, rerender);
   if (i === 2) return buildGiftsBurdensStep(state, ctx, rerender);
+  if (i === 3) return buildStatsStep(state, ctx, rerender);
   const empty = document.createElement('div');
   return empty;
 }
@@ -256,6 +371,7 @@ export function init(container, ctx, onFinish) {
   const state = blankWizardState();
 
   function render() {
+    reconcileStatBudget(state);
     container.innerHTML = '';
     const wrap = document.createElement('div');
     wrap.className = 'wizard';
