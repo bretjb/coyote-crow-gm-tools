@@ -506,3 +506,41 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 .search-input { display: block; width: 100%; }
 .encounter-picker-list { max-height: 18rem; overflow-y: auto; border: 1px solid var(--border); border-radius: 4px; padding: 0.5rem; }
 .encounter-picker-row { display: flex; align-items: center; gap: 0.5rem; padding: 0.25rem 0; cursor: pointer; }
+
+.wizard { display: flex; flex-direction: column; gap: 0.75rem; }
+
+.wizard-summary-line {
+  padding: 0.5rem 0.75rem;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.wizard-option-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+  gap: 0.6rem;
+  margin-bottom: 0.75rem;
+}
+
+.wizard-option-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  text-align: left;
+  padding: 0.6rem 0.75rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.wizard-option-card:hover { background: var(--surface-raised); }
+
+.wizard-option-card.selected {
+  border-color: var(--accent-copper);
+  background: var(--surface-raised);
+}
+
+.wizard-step-nav { margin-top: 0.5rem; }

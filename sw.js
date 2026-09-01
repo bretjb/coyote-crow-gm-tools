@@ -1,4 +1,4 @@
-const CACHE = 'cc-gm-v35';
+const CACHE = 'cc-gm-v36';
 
 const ASSETS = [
   './',
@@ -16,6 +16,7 @@ const ASSETS = [
   './js/tooltip.js',
   './js/character-card.js',
   './js/pc-gen.js',
+  './js/pc-wizard.js',
   './js/pc-storage.js',
   './js/encounter.js',
   './js/npc-pdf-export.js',

@@ -8,6 +8,7 @@ import { loadGlossary } from './tooltip.js';
 import { calcDerivedStats } from './npc-character-gen.js';
 import { rollDice, countSuccesses } from './dice.js';
 import { savePc, updatePc, getAll, removePc, undoRemove, subscribe, exportAll, importMerge } from './pc-storage.js';
+import { init as initPcWizard } from './pc-wizard.js';
 
 async function loadJson(path) {
   const res = await fetch(path);
@@ -40,6 +41,7 @@ export async function init(container) {
     <h2 class="mb-1">PC Generator</h2>
     <div class="row-flex-wrap mb-1-5">
       <button id="btn-new-pc">New PC</button>
+      <button id="btn-guided-pc" class="secondary">Guided Creation</button>
     </div>
     <div id="pc-output"></div>
 
@@ -111,6 +113,14 @@ export async function init(container) {
     const pc = blankPc();
     output.innerHTML = '';
     output.appendChild(renderPcCard(pc, ctx, undefined, 'edit'));
+  });
+
+  container.querySelector('#btn-guided-pc').addEventListener('click', () => {
+    output.innerHTML = '';
+    initPcWizard(output, ctx, pc => {
+      output.innerHTML = '';
+      output.appendChild(renderPcCard(pc, ctx, undefined, 'edit'));
+    });
   });
 }
 
