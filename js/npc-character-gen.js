@@ -20,7 +20,7 @@ export function weightedRandom(items, weights) {
 export function clampStat(v) {
   const n = Math.round(Number(v));
   if (Number.isNaN(n)) return 1;
-  return Math.min(5, Math.max(1, n));
+  return Math.min(7, Math.max(1, n));
 }
 
 export function clampSkillRank(v) {

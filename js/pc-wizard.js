@@ -7,8 +7,7 @@ export const STAT_NAMES = [
   'Perception', 'Wisdom', 'Spirit', 'Charisma', 'Will',
 ];
 
-// Bumped by later tasks as more steps are implemented (2 -> 3 -> 4 -> 5).
-let STEP_COUNT = 5;
+const STEP_COUNT = 5;
 
 function blankWizardState() {
   return {
@@ -138,14 +137,22 @@ function setSkillGeneral(name, state, rank) {
 function reconcileSkillBudget(state, ctx) {
   let guard = 0;
   while (skillPointsRemaining(state, ctx) < 0 && guard < 200) {
-    // Drop the priciest specialization first (bonus content, not core rank).
+    // Drop the priciest specialization step first (bonus content, not core rank),
+    // one rank at a time so an unrelated large investment isn't wiped out in one go.
     let specTarget = null, specBest = -1;
     ctx.allSkills.forEach(s => {
-      const cost = skillSpecCost(s.name, state);
+      const spec = state.skills[s.name]?.specialized;
+      if (!spec || spec.rank <= 0) return;
+      const cost = SKILL_COSTS[spec.rank] - SKILL_COSTS[spec.rank - 1];
       if (cost > specBest) { specBest = cost; specTarget = s.name; }
     });
     if (specTarget && specBest > 0) {
-      delete state.skills[specTarget].specialized;
+      const spec = state.skills[specTarget].specialized;
+      if (spec.rank <= 1) {
+        delete state.skills[specTarget].specialized;
+      } else {
+        spec.rank -= 1;
+      }
       guard++;
       continue;
     }
@@ -403,7 +410,7 @@ function buildSkillRow(skillDef, state, ctx, remaining, rerender) {
   const tr = document.createElement('tr');
   tr.innerHTML = `
     <td>${esc(skillDef.name)}</td>
-    <td class="text-muted-sm">${skillDef.diceCheck.join(' / ')}</td>
+    <td class="text-muted-sm">${esc(skillDef.diceCheck.join(' / '))}</td>
     <td>${rank}</td>
   `;
 
@@ -444,6 +451,10 @@ function buildSkillRow(skillDef, state, ctx, remaining, rerender) {
       select.appendChild(opt);
     });
     select.addEventListener('change', () => {
+      if (select.value && remaining < SKILL_COSTS[1]) {
+        select.value = current?.name || '';
+        return;
+      }
       const entry = state.skills[skillDef.name] || { general: rank };
       entry.specialized = select.value ? { name: select.value, rank: 1 } : undefined;
       state.skills[skillDef.name] = entry;
