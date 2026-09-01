@@ -1,6 +1,6 @@
 // js/pc-wizard.js
 import { esc } from './character-card.js';
-import { STAT_COSTS } from './npc-character-gen.js';
+import { STAT_COSTS, SKILL_COSTS, clampSpecRank } from './npc-character-gen.js';
 
 export const STAT_NAMES = [
   'Strength', 'Agility', 'Endurance', 'Intelligence',
@@ -8,7 +8,7 @@ export const STAT_NAMES = [
 ];
 
 // Bumped by later tasks as more steps are implemented (2 -> 3 -> 4 -> 5).
-let STEP_COUNT = 4;
+let STEP_COUNT = 5;
 
 function blankWizardState() {
   return {
@@ -88,6 +88,78 @@ function reconcileStatBudget(state) {
     });
     if (!target) break;
     state.stats[target] -= 1;
+    guard++;
+  }
+}
+
+function skillFloor(name, state) {
+  return name === state.archetypeFreeSkill ? 1 : 0;
+}
+
+function skillGeneralRank(name, state) {
+  return state.skills[name]?.general || 0;
+}
+
+function skillGeneralCost(name, state) {
+  const rank = skillGeneralRank(name, state);
+  return SKILL_COSTS[rank] - SKILL_COSTS[skillFloor(name, state)];
+}
+
+function skillSpecCost(name, state) {
+  const spec = state.skills[name]?.specialized;
+  return spec ? SKILL_COSTS[spec.rank] : 0;
+}
+
+function skillBudget(state) {
+  return 42 + (state.gbApplyTo === 'skills' ? gbLeftover(state) : 0);
+}
+
+function totalSkillSpent(state, ctx) {
+  return ctx.allSkills.reduce((sum, s) => sum + skillGeneralCost(s.name, state) + skillSpecCost(s.name, state), 0);
+}
+
+function skillPointsRemaining(state, ctx) {
+  return skillBudget(state) - totalSkillSpent(state, ctx);
+}
+
+function setSkillGeneral(name, state, rank) {
+  if (rank <= 0) {
+    delete state.skills[name];
+    return;
+  }
+  const existing = state.skills[name] || {};
+  const maxSpecRank = Math.max(0, rank - 1);
+  if (existing.specialized && existing.specialized.rank > maxSpecRank) {
+    existing.specialized = maxSpecRank > 0 ? { ...existing.specialized, rank: maxSpecRank } : undefined;
+  }
+  state.skills[name] = { ...existing, general: rank };
+}
+
+function reconcileSkillBudget(state, ctx) {
+  let guard = 0;
+  while (skillPointsRemaining(state, ctx) < 0 && guard < 200) {
+    // Drop the priciest specialization first (bonus content, not core rank).
+    let specTarget = null, specBest = -1;
+    ctx.allSkills.forEach(s => {
+      const cost = skillSpecCost(s.name, state);
+      if (cost > specBest) { specBest = cost; specTarget = s.name; }
+    });
+    if (specTarget && specBest > 0) {
+      delete state.skills[specTarget].specialized;
+      guard++;
+      continue;
+    }
+    // Then reduce the priciest general rank above its floor.
+    let genTarget = null, genBest = -1;
+    ctx.allSkills.forEach(s => {
+      const rank = skillGeneralRank(s.name, state);
+      const floor = skillFloor(s.name, state);
+      if (rank <= floor) return;
+      const cost = SKILL_COSTS[rank] - SKILL_COSTS[rank - 1];
+      if (cost > genBest) { genBest = cost; genTarget = s.name; }
+    });
+    if (!genTarget) break;
+    setSkillGeneral(genTarget, state, skillGeneralRank(genTarget, state) - 1);
     guard++;
   }
 }
@@ -323,6 +395,175 @@ function buildStatsStep(state, ctx, rerender) {
   return wrap;
 }
 
+function buildSkillRow(skillDef, state, ctx, remaining, rerender) {
+  const floor = skillFloor(skillDef.name, state);
+  const rank = skillGeneralRank(skillDef.name, state);
+  const nextCost = rank < 6 ? SKILL_COSTS[rank + 1] - SKILL_COSTS[rank] : null;
+
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td>${esc(skillDef.name)}</td>
+    <td class="text-muted-sm">${skillDef.diceCheck.join(' / ')}</td>
+    <td>${rank}</td>
+  `;
+
+  const stepperTd = document.createElement('td');
+  const stepper = document.createElement('div');
+  stepper.className = 'wizard-stepper';
+  const decBtn = document.createElement('button');
+  decBtn.type = 'button';
+  decBtn.className = 'secondary';
+  decBtn.textContent = '−';
+  decBtn.disabled = rank <= floor;
+  decBtn.addEventListener('click', () => { setSkillGeneral(skillDef.name, state, rank - 1); rerender(); });
+  const incBtn = document.createElement('button');
+  incBtn.type = 'button';
+  incBtn.className = 'secondary';
+  incBtn.textContent = '+';
+  incBtn.disabled = nextCost === null || nextCost > remaining;
+  incBtn.addEventListener('click', () => { setSkillGeneral(skillDef.name, state, rank + 1); rerender(); });
+  stepper.appendChild(decBtn);
+  stepper.appendChild(incBtn);
+  stepperTd.appendChild(stepper);
+  tr.appendChild(stepperTd);
+
+  if (skillDef.specialized?.length && rank >= 2) {
+    const specTd = document.createElement('td');
+    const current = state.skills[skillDef.name]?.specialized;
+    const select = document.createElement('select');
+    const noneOpt = document.createElement('option');
+    noneOpt.value = '';
+    noneOpt.textContent = 'No specialization';
+    noneOpt.selected = !current;
+    select.appendChild(noneOpt);
+    skillDef.specialized.forEach(specName => {
+      const opt = document.createElement('option');
+      opt.value = specName;
+      opt.textContent = specName;
+      opt.selected = current?.name === specName;
+      select.appendChild(opt);
+    });
+    select.addEventListener('change', () => {
+      const entry = state.skills[skillDef.name] || { general: rank };
+      entry.specialized = select.value ? { name: select.value, rank: 1 } : undefined;
+      state.skills[skillDef.name] = entry;
+      rerender();
+    });
+    specTd.appendChild(select);
+
+    if (current) {
+      const maxSpecRank = Math.max(0, rank - 1);
+      const specNextCost = current.rank < maxSpecRank ? SKILL_COSTS[current.rank + 1] - SKILL_COSTS[current.rank] : null;
+      const specStepper = document.createElement('div');
+      specStepper.className = 'wizard-stepper';
+      const specDec = document.createElement('button');
+      specDec.type = 'button';
+      specDec.className = 'secondary';
+      specDec.textContent = '−';
+      specDec.disabled = current.rank <= 0;
+      specDec.addEventListener('click', () => {
+        current.rank = clampSpecRank(current.rank - 1, rank);
+        rerender();
+      });
+      const specInc = document.createElement('button');
+      specInc.type = 'button';
+      specInc.className = 'secondary';
+      specInc.textContent = '+';
+      specInc.disabled = specNextCost === null || specNextCost > remaining;
+      specInc.addEventListener('click', () => {
+        current.rank = clampSpecRank(current.rank + 1, rank);
+        rerender();
+      });
+      specStepper.appendChild(specDec);
+      specStepper.appendChild(specInc);
+      specTd.appendChild(specStepper);
+    }
+    tr.appendChild(specTd);
+  } else {
+    tr.appendChild(document.createElement('td'));
+  }
+
+  return tr;
+}
+
+function buildSkillsStep(state, ctx, rerender) {
+  const wrap = document.createElement('div');
+  const heading = document.createElement('h3');
+  heading.className = 'mb-0-5';
+  heading.textContent = 'Allocate Skills';
+  wrap.appendChild(heading);
+
+  const arch = archetypeObj(state, ctx);
+  if (arch && arch.freeSkillOptions?.length) {
+    // Guard against a stale archetypeFreeSkill after the user Edits back to the
+    // Archetype step and picks a different archetype: the previously-chosen free
+    // skill may not be one of the new archetype's options, in which case its
+    // floor/free-rank status has to move (or the select and state would desync).
+    if (!arch.freeSkillOptions.includes(state.archetypeFreeSkill)) {
+      const prev = state.archetypeFreeSkill;
+      state.archetypeFreeSkill = arch.freeSkillOptions[0];
+      if (prev && skillGeneralRank(prev, state) === 1) delete state.skills[prev];
+    }
+    const freeRow = document.createElement('div');
+    freeRow.className = 'row-flex-wrap mb-0-75';
+    const label = document.createElement('label');
+    label.className = 'field-label';
+    label.textContent = 'Free Archetype skill rank:';
+    const select = document.createElement('select');
+    arch.freeSkillOptions.forEach(name => {
+      const opt = document.createElement('option');
+      opt.value = name;
+      opt.textContent = name;
+      opt.selected = state.archetypeFreeSkill === name;
+      select.appendChild(opt);
+    });
+    if (!state.archetypeFreeSkill) {
+      state.archetypeFreeSkill = arch.freeSkillOptions[0];
+      select.value = state.archetypeFreeSkill;
+    }
+    select.addEventListener('change', () => {
+      const prev = state.archetypeFreeSkill;
+      state.archetypeFreeSkill = select.value;
+      if (prev && skillGeneralRank(prev, state) === 1) delete state.skills[prev];
+      rerender();
+    });
+    freeRow.appendChild(label);
+    freeRow.appendChild(select);
+    wrap.appendChild(freeRow);
+    if (!state.skills[state.archetypeFreeSkill]) {
+      state.skills[state.archetypeFreeSkill] = { general: 1 };
+    }
+  }
+
+  const remaining = skillPointsRemaining(state, ctx);
+  const badge = document.createElement('div');
+  badge.className = `wizard-points-badge mb-0-75${remaining < 0 ? ' negative' : ''}`;
+  badge.textContent = `Skill points remaining: ${remaining} / ${skillBudget(state)}`;
+  wrap.appendChild(badge);
+
+  const half = Math.ceil(ctx.allSkills.length / 2);
+  const pair = document.createElement('div');
+  pair.className = 'skill-table-pair';
+  [ctx.allSkills.slice(0, half), ctx.allSkills.slice(half)].forEach(subset => {
+    const table = document.createElement('table');
+    table.className = 'skill-table';
+    table.innerHTML = '<thead><tr><th>Skill</th><th>Stats</th><th>Rank</th><th></th><th>Specialization</th></tr></thead>';
+    const tbody = document.createElement('tbody');
+    subset.forEach(skillDef => tbody.appendChild(buildSkillRow(skillDef, state, ctx, remaining, rerender)));
+    table.appendChild(tbody);
+    const skillWrap = document.createElement('div');
+    skillWrap.className = 'skill-table-wrap';
+    skillWrap.appendChild(table);
+    pair.appendChild(skillWrap);
+  });
+  wrap.appendChild(pair);
+
+  wrap.appendChild(buildStepNav({
+    onBack: () => { state.step = 3; rerender(); },
+  }));
+  return wrap;
+}
+
 function summaryText(i, state, ctx) {
   if (i === 0) {
     const arch = archetypeObj(state, ctx);
@@ -363,6 +604,7 @@ function buildStepBody(i, state, ctx, rerender) {
   if (i === 1) return buildPathStep(state, ctx, rerender);
   if (i === 2) return buildGiftsBurdensStep(state, ctx, rerender);
   if (i === 3) return buildStatsStep(state, ctx, rerender);
+  if (i === 4) return buildSkillsStep(state, ctx, rerender);
   const empty = document.createElement('div');
   return empty;
 }
@@ -372,6 +614,7 @@ export function init(container, ctx, onFinish) {
 
   function render() {
     reconcileStatBudget(state);
+    reconcileSkillBudget(state, ctx);
     container.innerHTML = '';
     const wrap = document.createElement('div');
     wrap.className = 'wizard';

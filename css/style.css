@@ -585,3 +585,8 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 
 .wizard-stepper { display: flex; gap: 0.4rem; margin-top: 0.3rem; }
 .wizard-stepper button { min-width: 2.2rem; }
+
+.wizard .skill-table th:nth-child(4),
+.wizard .skill-table td:nth-child(4) { width: 5rem; }
+.wizard .skill-table th:nth-child(5),
+.wizard .skill-table td:nth-child(5) { width: 9rem; }
