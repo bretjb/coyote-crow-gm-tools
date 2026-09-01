@@ -1,6 +1,6 @@
 // js/pc-wizard.js
 import { esc } from './character-card.js';
-import { STAT_COSTS, SKILL_COSTS, clampSpecRank } from './npc-character-gen.js';
+import { STAT_COSTS, SKILL_COSTS, clampSpecRank, calcDerivedStats } from './npc-character-gen.js';
 
 export const STAT_NAMES = [
   'Strength', 'Agility', 'Endurance', 'Intelligence',
@@ -564,6 +564,28 @@ function buildSkillsStep(state, ctx, rerender) {
   return wrap;
 }
 
+function buildFinishedPc(state, ctx) {
+  const stats = {};
+  STAT_NAMES.forEach(name => { stats[name] = displayedStat(name, state, ctx); });
+  const derived = calcDerivedStats(stats);
+  return {
+    name: '', age: '', gender: '', sexuality: '',
+    archetype: state.archetype,
+    path: { name: state.path },
+    motivation: { name: '', description: '' },
+    giftsAndBurdens: state.giftsAndBurdens,
+    stats,
+    skills: JSON.parse(JSON.stringify(state.skills)),
+    ability: { name: '', description: '', diceCheck: [] },
+    derived,
+    current: { Body: derived.Body, Mind: derived.Mind, Soul: derived.Soul },
+  };
+}
+
+function isWizardComplete(state) {
+  return Boolean(state.archetype) && Boolean(state.path) && gbPointsRemaining(state) >= 0;
+}
+
 function summaryText(i, state, ctx) {
   if (i === 0) {
     const arch = archetypeObj(state, ctx);
@@ -624,6 +646,16 @@ export function init(container, ctx, onFinish) {
           ? buildSummaryLine(i, state, ctx, render)
           : buildStepBody(i, state, ctx, render)
       );
+    }
+    if (isWizardComplete(state)) {
+      const finishRow = document.createElement('div');
+      finishRow.className = 'row-flex-wrap wizard-finish-row';
+      const finishBtn = document.createElement('button');
+      finishBtn.type = 'button';
+      finishBtn.textContent = 'Finish';
+      finishBtn.addEventListener('click', () => onFinish(buildFinishedPc(state, ctx)));
+      finishRow.appendChild(finishBtn);
+      wrap.appendChild(finishRow);
     }
     container.appendChild(wrap);
   }

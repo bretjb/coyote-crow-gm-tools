@@ -590,3 +590,5 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 .wizard .skill-table td:nth-child(4) { width: 5rem; }
 .wizard .skill-table th:nth-child(5),
 .wizard .skill-table td:nth-child(5) { width: 9rem; }
+
+.wizard-finish-row { margin-top: 0.5rem; padding-top: 0.75rem; border-top: 1px solid var(--border); }
