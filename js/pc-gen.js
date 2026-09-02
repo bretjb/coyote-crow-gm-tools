@@ -40,8 +40,8 @@ export async function init(container) {
   container.innerHTML = `
     <h2 class="mb-1">PC Generator</h2>
     <div class="row-flex-wrap mb-1-5">
-      <button id="btn-new-pc" class="toggle-active">New PC</button>
-      <button id="btn-guided-pc">Guided Creation</button>
+      <button id="btn-new-pc">New PC</button>
+      <button id="btn-guided-pc" class="secondary">Guided Creation</button>
     </div>
     <div id="pc-output"></div>
 
@@ -112,8 +112,8 @@ export async function init(container) {
   const btnNewPc = container.querySelector('#btn-new-pc');
   const btnGuidedPc = container.querySelector('#btn-guided-pc');
   function setActiveMode(mode) {
-    btnNewPc.classList.toggle('toggle-active', mode === 'new');
-    btnGuidedPc.classList.toggle('toggle-active', mode === 'guided');
+    btnNewPc.classList.toggle('secondary', mode !== 'new');
+    btnGuidedPc.classList.toggle('secondary', mode !== 'guided');
   }
 
   btnNewPc.addEventListener('click', () => {
