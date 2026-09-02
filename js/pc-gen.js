@@ -40,8 +40,8 @@ export async function init(container) {
   container.innerHTML = `
     <h2 class="mb-1">PC Generator</h2>
     <div class="row-flex-wrap mb-1-5">
-      <button id="btn-new-pc">New PC</button>
-      <button id="btn-guided-pc" class="secondary">Guided Creation</button>
+      <button id="btn-new-pc" class="toggle-active">New PC</button>
+      <button id="btn-guided-pc">Guided Creation</button>
     </div>
     <div id="pc-output"></div>
 
@@ -109,15 +109,25 @@ export async function init(container) {
     }
   });
 
-  container.querySelector('#btn-new-pc').addEventListener('click', () => {
+  const btnNewPc = container.querySelector('#btn-new-pc');
+  const btnGuidedPc = container.querySelector('#btn-guided-pc');
+  function setActiveMode(mode) {
+    btnNewPc.classList.toggle('toggle-active', mode === 'new');
+    btnGuidedPc.classList.toggle('toggle-active', mode === 'guided');
+  }
+
+  btnNewPc.addEventListener('click', () => {
+    setActiveMode('new');
     const pc = blankPc();
     output.innerHTML = '';
     output.appendChild(renderPcCard(pc, ctx, undefined, 'edit'));
   });
 
-  container.querySelector('#btn-guided-pc').addEventListener('click', () => {
+  btnGuidedPc.addEventListener('click', () => {
+    setActiveMode('guided');
     output.innerHTML = '';
     initPcWizard(output, ctx, pc => {
+      setActiveMode('new');
       output.innerHTML = '';
       output.appendChild(renderPcCard(pc, ctx, undefined, 'edit'));
     });

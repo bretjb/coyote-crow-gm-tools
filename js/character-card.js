@@ -59,7 +59,7 @@ export function statCell(statName, character, onChange, glossary, mode) {
   const input = document.createElement('input');
   input.type = 'number';
   input.min = '1';
-  input.max = '7';
+  input.max = '5';
   input.className = 'stat-input';
   input.value = character.stats[statName];
   input.addEventListener('change', () => {

@@ -66,8 +66,14 @@ function displayedStat(name, state, ctx) {
   return state.stats[name] + statBonus(name, state, ctx);
 }
 
-function statStepCost(purchasedValue) {
-  if (purchasedValue >= 5) return null;
+// Final stat (purchased + bonus) may never exceed 5, so a stat's bonus eats into
+// how high it can be purchased.
+function statCeiling(name, state, ctx) {
+  return Math.max(1, 5 - statBonus(name, state, ctx));
+}
+
+function statStepCost(purchasedValue, ceiling) {
+  if (purchasedValue >= ceiling) return null;
   return STAT_COSTS[purchasedValue] - STAT_COSTS[purchasedValue - 1];
 }
 
@@ -81,6 +87,13 @@ function totalStatSpent(state) {
 
 function statPointsRemaining(state) {
   return statBudget(state) - totalStatSpent(state);
+}
+
+function reconcileStatCeiling(state, ctx) {
+  STAT_NAMES.forEach(name => {
+    const ceiling = statCeiling(name, state, ctx);
+    if (state.stats[name] > ceiling) state.stats[name] = ceiling;
+  });
 }
 
 function reconcileStatBudget(state) {
@@ -378,7 +391,7 @@ function buildStatsStep(state, ctx, rerender) {
   STAT_NAMES.forEach(name => {
     const purchased = state.stats[name];
     const bonus = statBonus(name, state, ctx);
-    const nextCost = statStepCost(purchased);
+    const nextCost = statStepCost(purchased, statCeiling(name, state, ctx));
 
     const cell = document.createElement('div');
     cell.className = 'wizard-stat-cell';
@@ -666,6 +679,7 @@ export function init(container, ctx, onFinish) {
   const state = blankWizardState();
 
   function render() {
+    reconcileStatCeiling(state, ctx);
     reconcileStatBudget(state);
     reconcileSkillBudget(state, ctx);
     container.innerHTML = '';

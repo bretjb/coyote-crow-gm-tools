@@ -23,6 +23,7 @@
   --muted: #b3a08c;
   --accent-purple: #a78bfa;
   --accent-copper: #d1913f;
+  --accent-gold: #e8c547;
   --success: #7fd9a4;
   --danger: #c96b5c;
 
@@ -146,6 +147,10 @@ button.secondary {
   background: var(--surface-raised);
   color: var(--text);
   border: 1px solid var(--border);
+}
+
+button.toggle-active {
+  background: var(--accent-gold);
 }
 
 input, select, textarea {
