@@ -30,10 +30,10 @@ export function clampSkillRank(v) {
 }
 
 export function clampSpecRank(v, generalRank) {
-  const max = Math.max(0, generalRank - 1);
+  const min = Math.min(6, generalRank + 1);
   const n = Math.round(Number(v));
-  if (Number.isNaN(n)) return 0;
-  return Math.min(max, Math.max(0, n));
+  if (Number.isNaN(n)) return min;
+  return Math.min(6, Math.max(min, n));
 }
 
 export function allocateStats(budget, priorities) {
@@ -89,18 +89,19 @@ export function allocateSkills(budget, allSkills, preferredNames) {
     acquired[chosen.name].general = cur + 1;
   }
 
-  // Phase 2: buy specializations for eligible skills (general >= 2, 40% chance each)
+  // Phase 2: buy specializations for eligible skills (general >= 1, 40% chance each)
   for (const [name, data] of Object.entries(acquired)) {
-    if (data.general < 2 || remaining <= 0) continue;
+    if (data.general < 1 || remaining <= 0) continue;
     if (Math.random() > 0.4) continue;
     const skill = allSkills.find(s => s.name === name);
     if (!skill || !skill.specialized?.length) continue;
 
-    // Max spec rank = general - 1
-    const maxSpecRank = data.general - 1;
+    // Spec rank must be higher than its general rank
+    const minSpecRank = data.general + 1;
+    if (minSpecRank > 6) continue;
     // Find highest affordable spec rank
     let buyRank = 0;
-    for (let r = 1; r <= maxSpecRank; r++) {
+    for (let r = minSpecRank; r <= 6; r++) {
       if (SKILL_COSTS[r] <= remaining) buyRank = r;
     }
     if (buyRank === 0) continue;

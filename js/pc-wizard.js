@@ -53,6 +53,15 @@ function statBonus(name, state, ctx) {
   return archetypeStatBonus(name, state, ctx) + pathStatBonus(name, state, ctx);
 }
 
+function statBonusSources(name, state, ctx) {
+  const sources = [];
+  const arch = archetypeObj(state, ctx);
+  if (arch && arch.statBonus === name) sources.push(arch.name);
+  const path = pathObj(state, ctx);
+  if (path && path.statBonuses.includes(name)) sources.push(path.name);
+  return sources;
+}
+
 function displayedStat(name, state, ctx) {
   return state.stats[name] + statBonus(name, state, ctx);
 }
@@ -127,9 +136,9 @@ function setSkillGeneral(name, state, rank) {
     return;
   }
   const existing = state.skills[name] || {};
-  const maxSpecRank = Math.max(0, rank - 1);
-  if (existing.specialized && existing.specialized.rank > maxSpecRank) {
-    existing.specialized = maxSpecRank > 0 ? { ...existing.specialized, rank: maxSpecRank } : undefined;
+  if (existing.specialized && existing.specialized.rank <= rank) {
+    const minSpecRank = rank + 1;
+    existing.specialized = minSpecRank <= 6 ? { ...existing.specialized, rank: minSpecRank } : undefined;
   }
   state.skills[name] = { ...existing, general: rank };
 }
@@ -139,19 +148,26 @@ function reconcileSkillBudget(state, ctx) {
   while (skillPointsRemaining(state, ctx) < 0 && guard < 200) {
     // Drop the priciest specialization step first (bonus content, not core rank),
     // one rank at a time so an unrelated large investment isn't wiped out in one go.
-    let specTarget = null, specBest = -1;
+    // A specialization can't be reduced below one above its general rank, so once
+    // it's at that floor the only remaining cut is to drop it entirely.
+    let specTarget = null, specBest = -1, specAction = null;
     ctx.allSkills.forEach(s => {
       const spec = state.skills[s.name]?.specialized;
-      if (!spec || spec.rank <= 0) return;
-      const cost = SKILL_COSTS[spec.rank] - SKILL_COSTS[spec.rank - 1];
-      if (cost > specBest) { specBest = cost; specTarget = s.name; }
+      if (!spec) return;
+      const floor = skillGeneralRank(s.name, state) + 1;
+      if (spec.rank > floor) {
+        const cost = SKILL_COSTS[spec.rank] - SKILL_COSTS[spec.rank - 1];
+        if (cost > specBest) { specBest = cost; specTarget = s.name; specAction = 'decrement'; }
+      } else {
+        const cost = SKILL_COSTS[spec.rank];
+        if (cost > specBest) { specBest = cost; specTarget = s.name; specAction = 'delete'; }
+      }
     });
     if (specTarget && specBest > 0) {
-      const spec = state.skills[specTarget].specialized;
-      if (spec.rank <= 1) {
-        delete state.skills[specTarget].specialized;
+      if (specAction === 'decrement') {
+        state.skills[specTarget].specialized.rank -= 1;
       } else {
-        spec.rank -= 1;
+        delete state.skills[specTarget].specialized;
       }
       guard++;
       continue;
@@ -362,15 +378,14 @@ function buildStatsStep(state, ctx, rerender) {
   STAT_NAMES.forEach(name => {
     const purchased = state.stats[name];
     const bonus = statBonus(name, state, ctx);
-    const displayed = purchased + bonus;
     const nextCost = statStepCost(purchased);
 
     const cell = document.createElement('div');
     cell.className = 'wizard-stat-cell';
     cell.innerHTML = `
       <span class="wizard-stat-name">${esc(name)}</span>
-      <span class="wizard-stat-value">${displayed}</span>
-      <span class="text-muted-sm">${purchased} purchased${bonus ? ` + ${bonus} bonus` : ''}</span>
+      <span class="wizard-stat-value">${purchased}</span>
+      <span class="text-muted-sm">${bonus ? `+${bonus} bonus (${statBonusSources(name, state, ctx).map(esc).join(', ')}) applied at Finish` : ' '}</span>
     `;
 
     const stepper = document.createElement('div');
@@ -434,9 +449,10 @@ function buildSkillRow(skillDef, state, ctx, remaining, rerender) {
   stepperTd.appendChild(stepper);
   tr.appendChild(stepperTd);
 
-  if (skillDef.specialized?.length && rank >= 2) {
+  if (skillDef.specialized?.length && rank >= 1 && rank < 6) {
     const specTd = document.createElement('td');
     const current = state.skills[skillDef.name]?.specialized;
+    const minSpecRank = rank + 1;
     const select = document.createElement('select');
     const noneOpt = document.createElement('option');
     noneOpt.value = '';
@@ -451,27 +467,31 @@ function buildSkillRow(skillDef, state, ctx, remaining, rerender) {
       select.appendChild(opt);
     });
     select.addEventListener('change', () => {
-      if (select.value && remaining < SKILL_COSTS[1]) {
+      if (select.value && SKILL_COSTS[minSpecRank] > remaining) {
         select.value = current?.name || '';
         return;
       }
       const entry = state.skills[skillDef.name] || { general: rank };
-      entry.specialized = select.value ? { name: select.value, rank: 1 } : undefined;
+      entry.specialized = select.value ? { name: select.value, rank: minSpecRank } : undefined;
       state.skills[skillDef.name] = entry;
       rerender();
     });
     specTd.appendChild(select);
 
     if (current) {
-      const maxSpecRank = Math.max(0, rank - 1);
-      const specNextCost = current.rank < maxSpecRank ? SKILL_COSTS[current.rank + 1] - SKILL_COSTS[current.rank] : null;
+      const rankLabel = document.createElement('span');
+      rankLabel.className = 'text-muted-sm';
+      rankLabel.textContent = `Rank ${current.rank}`;
+      specTd.appendChild(rankLabel);
+
+      const specNextCost = current.rank < 6 ? SKILL_COSTS[current.rank + 1] - SKILL_COSTS[current.rank] : null;
       const specStepper = document.createElement('div');
       specStepper.className = 'wizard-stepper';
       const specDec = document.createElement('button');
       specDec.type = 'button';
       specDec.className = 'secondary';
       specDec.textContent = '−';
-      specDec.disabled = current.rank <= 0;
+      specDec.disabled = current.rank <= minSpecRank;
       specDec.addEventListener('click', () => {
         current.rank = clampSpecRank(current.rank - 1, rank);
         rerender();

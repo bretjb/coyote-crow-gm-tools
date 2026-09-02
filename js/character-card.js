@@ -323,7 +323,7 @@ export function generalSkillRow(skillDef, character, onChange, glossary, mode) {
       onChange();
     });
     rankTd.appendChild(rankInput);
-    if (skillDef.specialized?.length && rank >= 2 && !acquired?.specialized) {
+    if (skillDef.specialized?.length && rank >= 1 && !acquired?.specialized) {
       rankTd.appendChild(buildAddSpecControl(skillDef, character, onChange));
     }
   }
@@ -358,11 +358,12 @@ export function buildAddSpecControl(skillDef, character, onChange) {
   }
 
   const generalRank = character.skills[skillDef.name].general;
+  const minSpecRank = Math.min(6, generalRank + 1);
   const rankInput = document.createElement('input');
   rankInput.type = 'number';
-  rankInput.min = '1';
-  rankInput.max = String(Math.max(1, generalRank - 1));
-  rankInput.value = '1';
+  rankInput.min = String(minSpecRank);
+  rankInput.max = '6';
+  rankInput.value = String(minSpecRank);
   rankInput.className = 'skill-rank-input';
 
   const confirmBtn = document.createElement('button');
@@ -377,7 +378,7 @@ export function buildAddSpecControl(skillDef, character, onChange) {
   rankInput.addEventListener('click', e => e.stopPropagation());
   confirmBtn.addEventListener('click', e => {
     e.stopPropagation();
-    character.skills[skillDef.name].specialized = { name: select.value, rank: clampSpecRank(rankInput.value, generalRank) || 1 };
+    character.skills[skillDef.name].specialized = { name: select.value, rank: clampSpecRank(rankInput.value, generalRank) };
     onChange();
   });
 
@@ -393,20 +394,19 @@ export function setGeneralRank(character, name, rawValue) {
   const rank = clampSkillRank(rawValue);
   const existing = character.skills[name];
   if (rank === 0) {
-    if (existing?.specialized) {
-      existing.general = 0;
-      existing.specialized.rank = clampSpecRank(existing.specialized.rank, 0);
-    } else {
-      delete character.skills[name];
-    }
+    delete character.skills[name];
     return;
   }
   if (!existing) {
     character.skills[name] = { general: rank };
   } else {
     existing.general = rank;
-    if (existing.specialized) {
-      existing.specialized.rank = clampSpecRank(existing.specialized.rank, rank);
+    if (existing.specialized && existing.specialized.rank <= rank) {
+      if (rank >= 6) {
+        delete existing.specialized;
+      } else {
+        existing.specialized.rank = clampSpecRank(existing.specialized.rank, rank);
+      }
     }
   }
 }
@@ -487,8 +487,8 @@ export function buildSpecTable(allSkills, character, specEntries, onChange, glos
     } else {
       const rankInput = document.createElement('input');
       rankInput.type = 'number';
-      rankInput.min = '0';
-      rankInput.max = String(Math.max(0, generalRank - 1));
+      rankInput.min = String(Math.min(6, generalRank + 1));
+      rankInput.max = '6';
       rankInput.value = rank;
       rankInput.className = 'skill-rank-input';
       rankInput.addEventListener('click', e => e.stopPropagation());
